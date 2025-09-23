@@ -52,6 +52,84 @@ def warn_long_paths():
     except Exception:
         pass  # sin permisos o clave no disponible
 
+def select_paddle_package(os_type: str, machine: str, version_info: sys.version_info) -> str:
+    """Devuelve la versión recomendada de paddlepaddle para la plataforma actual.
+
+    La matriz se basa en las compilaciones oficiales CPU (ruedas manylinux/win/mac) y
+    prioriza mantener un binario compatible sin obligar a instalar dependencias GPU.
+    Si no hay coincidencia exacta, se devuelve la opción más estable conocida para
+    ese sistema operativo o un valor por defecto para CPU.
+    """
+
+    python_tag = f"{version_info.major}.{version_info.minor}"
+    normalized_os = os_type.lower()
+    normalized_machine = machine.lower()
+
+    # Curado manualmente a partir de los binarios disponibles en https://www.paddlepaddle.org.cn/
+    compatibility_matrix = {
+        ("windows", "amd64"): {
+            "3.8": "paddlepaddle==2.5.2",
+            "3.9": "paddlepaddle==2.5.2",
+            "3.10": "paddlepaddle==3.1.2",
+            "3.11": "paddlepaddle==3.1.2",
+        },
+        ("windows", "arm64"): {
+            "3.10": "paddlepaddle==2.5.2",
+            "3.11": "paddlepaddle==2.5.2",
+        },
+        ("linux", "x86_64"): {
+            "3.8": "paddlepaddle==2.6.1",
+            "3.9": "paddlepaddle==2.6.1",
+            "3.10": "paddlepaddle==2.6.1",
+            "3.11": "paddlepaddle==2.6.1",
+        },
+        ("linux", "aarch64"): {
+            "3.10": "paddlepaddle==2.6.1",
+            "3.11": "paddlepaddle==2.6.1",
+        },
+        ("darwin", "x86_64"): {
+            "3.9": "paddlepaddle==2.5.2",
+            "3.10": "paddlepaddle==2.5.2",
+        },
+        ("darwin", "arm64"): {
+            "3.9": "paddlepaddle==2.5.2",
+            "3.10": "paddlepaddle==2.5.2",
+            "3.11": "paddlepaddle==2.5.2",
+        },
+    }
+
+    fallback_per_os = {
+        "windows": "paddlepaddle==3.1.2",
+        "linux": "paddlepaddle==2.6.1",
+        "darwin": "paddlepaddle==2.5.2",
+    }
+
+    chosen = None
+    matrix_key = (normalized_os, normalized_machine)
+    if matrix_key in compatibility_matrix:
+        candidates = compatibility_matrix[matrix_key]
+        if python_tag in candidates:
+            chosen = candidates[python_tag]
+            print(
+                f"Seleccionando PaddlePaddle {chosen} (match exacto para {os_type} {machine} y Python {python_tag})."
+            )
+        else:
+            # Usa la versión más moderna disponible para esa plataforma
+            chosen = sorted(candidates.items(), key=lambda item: item[0])[-1][1]
+            print(
+                "⚠ No hay build exacto para Python "
+                f"{python_tag}; usando {chosen} (versión más estable disponible para {os_type} {machine})."
+            )
+    if not chosen:
+        default_pkg = fallback_per_os.get(normalized_os, "paddlepaddle==3.1.2")
+        chosen = default_pkg
+        print(
+            "⚠ Plataforma no listada explícitamente en la matriz de compatibilidad. "
+            f"Usando valor por defecto {chosen} (CPU)."
+        )
+
+    return chosen
+
 def main():
     relaunch_in_short_venv_if_needed()
     warn_long_paths()
@@ -92,12 +170,13 @@ def main():
     print(f"Sistema detectado: {os_type} {machine}")
 
     # Versiones compatibles (evitan dependencias pesadas)
-    paddle_pkg = "paddlepaddle==3.1.2"
+    paddle_pkg = select_paddle_package(os_type, machine, sys.version_info)
     paddleocr_pkg = "paddleocr==2.7.0.3"
 
     if not install_package(paddle_pkg):
         print("\n⚠ ADVERTENCIA: PaddlePaddle no se pudo instalar.")
-        print("Puedes intentar instalarlo manualmente con:")
+        print("Esta es la versión sugerida para tu entorno detectado.")
+        print("Intenta instalarla manualmente con:")
         print(f"  pip install {paddle_pkg}")
         print("\nPara GPU con CUDA (si corresponde):")
         print("  pip install paddlepaddle-gpu")
