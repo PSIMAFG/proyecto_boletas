@@ -12,6 +12,8 @@ import platform
 import os
 import venv
 
+
+
 def install_package(package: str) -> bool:
     """Instala un paquete con pip (sin cache)"""
     try:
