@@ -132,8 +132,26 @@ def select_paddle_package(os_type: str, machine: str, version_info: sys.version_
                 f"Seleccionando PaddlePaddle {chosen} (match exacto para {os_type} {machine} y Python {python_tag})."
             )
         else:
-            # Usa la versión más moderna disponible para esa plataforma
-            chosen = sorted(candidates.items(), key=lambda item: item[0])[-1][1]
+            # Usa la versión más moderna disponible para esa plataforma que no exceda
+            # la versión de Python actual. Si no hay ninguna <=, toma la más reciente.
+            def _parse_py_tag(tag: str) -> tuple[int, int]:
+                major_str, minor_str = tag.split(".")
+                return int(major_str), int(minor_str)
+
+            sorted_candidates = sorted(
+                ((_parse_py_tag(py_tag), pkg) for py_tag, pkg in candidates.items()),
+                key=lambda item: item[0],
+            )
+            current_version = _parse_py_tag(python_tag)
+            chosen_pkg = None
+            for py_version, pkg in sorted_candidates:
+                if py_version <= current_version:
+                    chosen_pkg = pkg
+            if not chosen_pkg:
+                # No se encontró una versión <= a la actual; usa la más baja disponible.
+                chosen_pkg = sorted_candidates[0][1]
+
+            chosen = chosen_pkg
             print(
                 "⚠ No hay build exacto para Python "
                 f"{python_tag}; usando {chosen} (versión más estable disponible para {os_type} {machine})."
@@ -200,6 +218,53 @@ def main():
         print("  pip install paddlepaddle-gpu")
         failed.append(paddle_pkg)
 
+    def manual_paddleocr_install() -> tuple[bool, bool]:
+        print("\n⚠ Ejecutando instalación guiada de PaddleOCR para entornos recientes...")
+        manual_deps: List[tuple[str, Optional[List[str]]]] = [
+            ("shapely>=2.0,<2.2", None),
+            ("scikit-image>=0.25", None),
+            ("imgaug>=0.4", None),
+            ("pyclipper>=1.3.0.post5", None),
+            ("lmdb>=1.4", None),
+            ("visualdl>=2.5", None),
+            ("rapidfuzz>=3.0", None),
+            ("opencv-python>=4.10", None),
+            ("opencv-contrib-python>=4.10", None),
+            ("cython>=3.0", None),
+            ("lxml>=4.9", None),
+            ("premailer>=3.10", None),
+            ("attrdict>=2.0", None),
+            ("PyYAML>=6.0", None),
+            ("python-docx>=1.0", None),
+            ("beautifulsoup4>=4.9", None),
+            ("fonttools>=4.24.0", None),
+            ("fire>=0.3.0", None),
+            ("pdf2docx>=0.5.8", None),
+            ("PyMuPDF>=1.24,<1.28", ["--only-binary", ":all:"]),
+        ]
+
+        if not install_package(paddleocr_pkg, extra_args=["--no-deps"]):
+            return False, False
+
+        pdf_ready = True
+        all_ok = True
+        for dep, extra in manual_deps:
+            if not install_package(dep, extra_args=extra):
+                failed.append(dep)
+                all_ok = False
+                if dep.lower().startswith("pymupdf"):
+                    pdf_ready = False
+        if not pdf_ready:
+            print(
+                "⚠ PyMuPDF no pudo instalarse automáticamente. PaddleOCR funcionará sin soporte directo de PDF."
+            )
+        return all_ok, pdf_ready and all_ok
+
+    force_manual = os_type.lower() == "windows" and sys.version_info >= (3, 13)
+    paddleocr_pdf_support = True
+    if force_manual:
+        paddleocr_installed, paddleocr_pdf_support = manual_paddleocr_install()
+        if not paddleocr_installed:
     paddleocr_installed = install_package(paddleocr_pkg)
     paddleocr_pdf_support = True
     if not paddleocr_installed:
@@ -234,13 +299,26 @@ def main():
                 install_package(dep)
             paddleocr_pdf_support = False
         else:
+main
             print("\n⚠ ADVERTENCIA: PaddleOCR no se pudo instalar.")
             print("Intenta instalarlo manualmente con:")
             print(f"  pip install {paddleocr_pkg}")
             failed.append(paddleocr_pkg)
+
+    else:
+        paddleocr_installed = install_package(paddleocr_pkg)
+        if not paddleocr_installed:
+            paddleocr_installed, paddleocr_pdf_support = manual_paddleocr_install()
+            if not paddleocr_installed:
+                print("\n⚠ ADVERTENCIA: PaddleOCR no se pudo instalar.")
+                print("Intenta instalarlo manualmente con:")
+                print(f"  pip install {paddleocr_pkg}")
+                failed.append(paddleocr_pkg)
+
     elif os_type.lower() == "windows" and sys.version_info >= (3, 13):
         # Incluso si la instalación pasó (p. ej. en un entorno con VS Build Tools), advertimos de PDF.
         paddleocr_pdf_support = False
+main
 
     print("\n3. VERIFICANDO INSTALACIÓN")
     print("-" * 40)
