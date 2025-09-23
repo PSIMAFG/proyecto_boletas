@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # main.py
 """
 Aplicación principal del sistema de procesamiento de boletas de honorarios
@@ -700,3 +703,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # config.py
 """
 Configuración global del sistema de procesamiento de boletas v3.0
@@ -113,3 +116,4 @@ MESES_SHORT = {'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
 # Configuración de rotación de imágenes
 ROTATION_ANGLES = [0, 90, 180, 270]  # Ángulos a probar
 AUTO_ROTATION = True  # Detectar y corregir automáticamente
+

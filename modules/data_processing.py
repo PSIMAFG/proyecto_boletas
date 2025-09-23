@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # modules/data_processing.py
 """
 Módulo de procesamiento de datos extraídos de boletas
@@ -588,3 +591,4 @@ class DataProcessor:
         fields['needs_review'] = self.needs_manual_review(fields, conf_mean, text_all, conf_thresh=OCR_CONFIDENCE_THRESHOLD)
         
         return fields
+

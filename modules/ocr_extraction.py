@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # modules/ocr_extraction.py
 """
 Módulo de extracción OCR para boletas de honorarios
@@ -343,3 +346,4 @@ class OCRExtractor:
         found_common = sum(1 for word in words if word in common_words)
         
         return found_common >= 2 or legible_ratio > 0.85
+

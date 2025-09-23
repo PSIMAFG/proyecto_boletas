@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # modules/__init__.py
 """
 Módulos del sistema de procesamiento de boletas de honorarios
@@ -28,3 +31,4 @@ __all__ = [
     'get_month_year_from_date',
     'format_currency'
 ]
+

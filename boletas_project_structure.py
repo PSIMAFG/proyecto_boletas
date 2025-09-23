@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # Estructura del proyecto modular:
 #
 # proyecto_boletas/
@@ -101,3 +104,4 @@ MESES = {
 }
 
 MESES_SHORT = {'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'}
+

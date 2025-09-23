@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # main_enhanced.py
 """
 Aplicación principal mejorada con soporte multi-motor OCR y visualización de versiones
@@ -970,3 +973,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

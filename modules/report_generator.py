@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # modules/report_generator.py
 """
 Módulo de generación de informes en Excel con fórmulas dinámicas
@@ -467,3 +470,4 @@ class ReportGenerator:
         worksheet.set_column('D:D', 12)
         
         writer.close()
+

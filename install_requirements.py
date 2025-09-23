@@ -1,7 +1,10 @@
-# install_requirements.py
+﻿# install_requirements.py
 """
-Script de instalación de todas las dependencias necesarias para el sistema
-Incluye PaddleOCR y todas las librerías requeridas
+Instalación de dependencias para el Sistema de Boletas.
+Contexto:
+- GUI con Tkinter (no se instala por pip; solo se verifica).
+- OCR principal Tesseract; PaddleOCR opcional como fallback.
+- Manejo de rutas largas en Windows (Python de Microsoft Store).
 """
 import subprocess
 import sys
@@ -9,8 +12,8 @@ import platform
 import os
 import venv
 
-def install_package(package):
-    """Instala un paquete con pip (sin cache para evitar residuos)"""
+def install_package(package: str) -> bool:
+    """Instala un paquete con pip (sin cache)"""
     try:
         print(f"Instalando {package}...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", package])
@@ -22,24 +25,22 @@ def install_package(package):
 
 def relaunch_in_short_venv_if_needed():
     """
-    Si se ejecuta con el Python de Microsoft Store (ruta larga),
-    relanza el script dentro de un venv en C:\p\boletas_venv para evitar el límite de rutas.
+    Si se usa Python de Microsoft Store (ruta larga), relanza el script
+    dentro de un venv corto para evitar el límite de rutas (Win32 long paths).
     """
-    # Detecta Python de Microsoft Store por la ruta al ejecutable
     if os.name == "nt" and "PythonSoftwareFoundation.Python" in sys.executable:
         target = r"C:\p\boletas_venv"
         py = os.path.join(target, "Scripts", "python.exe")
         if not os.path.exists(py):
             print(f"Creando venv corto en {target} ...")
             venv.EnvBuilder(with_pip=True).create(target)
-        # Si no estamos usando ese Python, relanzamos
         if os.path.abspath(sys.executable) != os.path.abspath(py):
             print("Reiniciando instalador dentro del venv corto...")
             subprocess.check_call([py, os.path.abspath(__file__)])
             sys.exit(0)
 
 def warn_long_paths():
-    """Advertencia si Long Paths de Windows podría estar deshabilitado."""
+    """Muestra advertencia si Long Paths podría estar deshabilitado (informativo)."""
     if os.name != "nt":
         return
     try:
@@ -49,8 +50,7 @@ def warn_long_paths():
         if val != 1:
             print("⚠ Windows Long Paths está deshabilitado. Recomendado habilitarlo para evitar errores de pip.")
     except Exception:
-        # Sin permisos o clave no encontrada: solo informativo
-        pass
+        pass  # sin permisos o clave no disponible
 
 def main():
     relaunch_in_short_venv_if_needed()
@@ -61,11 +61,11 @@ def main():
     print("=" * 60)
     print()
 
-    # Actualizar pip primero
+    # Actualizar herramientas de build
     print("Actualizando pip...")
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"])
 
-    # Lista de paquetes básicos (sin tkinter)
+    # Paquetes base (sin tkinter)
     basic_packages = [
         "opencv-python-headless",
         "pytesseract",
@@ -80,69 +80,67 @@ def main():
 
     print("\n1. INSTALANDO PAQUETES BÁSICOS")
     print("-" * 40)
-
     failed = []
-    for package in basic_packages:
-        if not install_package(package):
-            failed.append(package)
+    for pkg in basic_packages:
+        if not install_package(pkg):
+            failed.append(pkg)
 
     print("\n2. INSTALANDO PADDLEOCR")
     print("-" * 40)
-
-    # Detectar sistema operativo y arquitectura (informativo)
     os_type = platform.system()
     machine = platform.machine()
     print(f"Sistema detectado: {os_type} {machine}")
 
-    # Fijar versiones amigables para evitar dependencias pesadas
-    paddle_package = "paddlepaddle==3.1.2"   # versión estable que evita rutas enormes
-    paddleocr_package = "paddleocr==2.7.0.3" # no arrastra paddlex/modelscope
+    # Versiones compatibles (evitan dependencias pesadas)
+    paddle_pkg = "paddlepaddle==3.1.2"
+    paddleocr_pkg = "paddleocr==2.7.0.3"
 
-    # Instalar PaddlePaddle
-    if not install_package(paddle_package):
+    if not install_package(paddle_pkg):
         print("\n⚠ ADVERTENCIA: PaddlePaddle no se pudo instalar.")
         print("Puedes intentar instalarlo manualmente con:")
-        print(f"  pip install {paddle_package}")
-        print("\nPara GPU con CUDA, usa (si corresponde):")
+        print(f"  pip install {paddle_pkg}")
+        print("\nPara GPU con CUDA (si corresponde):")
         print("  pip install paddlepaddle-gpu")
-        failed.append(paddle_package)
+        failed.append(paddle_pkg)
 
-    # Instalar PaddleOCR (solo si Paddle al menos intentó instalar)
-    if not install_package(paddleocr_package):
+    if not install_package(paddleocr_pkg):
         print("\n⚠ ADVERTENCIA: PaddleOCR no se pudo instalar.")
         print("Intenta instalarlo manualmente con:")
-        print(f"  pip install {paddleocr_package}")
-        failed.append(paddleocr_package)
+        print(f"  pip install {paddleocr_pkg}")
+        failed.append(paddleocr_pkg)
 
     print("\n3. VERIFICANDO INSTALACIÓN")
     print("-" * 40)
 
-    # Verificar instalaciones
-    installed = []
-    not_installed = []
+    # Verificación de imports
+    installed, not_installed = [], []
+    to_check = basic_packages + [paddle_pkg, paddleocr_pkg]
 
-    packages_to_check = basic_packages + [paddle_package, paddleocr_package]
+    module_map = {
+        "opencv-python-headless": "cv2",
+        "pillow": "PIL",
+        "pypdf": "pypdf",
+        "pdf2image": "pdf2image",
+        "paddlepaddle": "paddle",
+        "paddleocr": "paddleocr",
+    }
 
-    for package in packages_to_check:
+    for pkg in to_check:
+        base = pkg.split("==")[0]
+        mod = module_map.get(base, base.replace("-", "_"))
         try:
-            # Normaliza a nombre de módulo
-            base = package.split("==")[0]  # quita versiones si las hay
-            module_name = base.replace("-", "_")
-            if base == "opencv-python-headless":
-                module_name = "cv2"
-            elif base == "pillow":
-                module_name = "PIL"
-            elif base == "pypdf":
-                module_name = "pypdf"
-            elif base == "pdf2image":
-                module_name = "pdf2image"
-            elif base == "paddlepaddle":
-                module_name = "paddle"
-            # Import test
-            __import__(module_name)
+            __import__(mod)
             installed.append(base)
-        except ImportError:
+        except Exception:
             not_installed.append(base)
+
+    # Tkinter: solo verificación (no se instala por pip)
+    try:
+        import tkinter  # noqa: F401
+        tk_status = "✓ Tkinter disponible"
+    except Exception:
+        tk_status = "✗ Tkinter NO disponible (instala Python desde python.org con tcl/tk)"
+    print(f"\nEstado Tkinter: {tk_status}")
 
     print("\n✓ Paquetes instalados correctamente:")
     for p in installed:
@@ -156,58 +154,43 @@ def main():
     print("\n" + "=" * 60)
     print("INSTALACIÓN DE SOFTWARE ADICIONAL REQUERIDO")
     print("=" * 60)
-
-    print("\n⚠ IMPORTANTE: Además de las librerías Python, necesitas instalar:")
-    print()
-    print("1. TESSERACT OCR")
+    print("\n⚠ Además de las librerías Python, necesitas instalar:")
+    print("1) TESSERACT OCR")
     print("   - Windows: https://github.com/tesseract-ocr/tesseract")
     print("   - Linux: sudo apt-get install tesseract-ocr tesseract-ocr-spa")
     print("   - macOS: brew install tesseract")
-    print()
-    print("2. POPPLER (para PDFs)")
+    print("\n2) POPPLER (para PDFs)")
     print("   - Windows: https://github.com/oschwartz10612/poppler-windows/releases")
     print("   - Linux: sudo apt-get install poppler-utils")
     print("   - macOS: brew install poppler")
-    print()
-    print("3. IDIOMA ESPAÑOL PARA TESSERACT")
-    print("   - Descargar spa.traineddata de:")
-    print("     https://github.com/tesseract-ocr/tessdata")
+    print("\n3) IDIOMA ESPAÑOL PARA TESSERACT")
+    print("   - Descargar spa.traineddata de https://github.com/tesseract-ocr/tessdata")
     print("   - Copiarlo a la carpeta tessdata de Tesseract")
 
     print("\n" + "=" * 60)
-    print("CONFIGURACIÓN DE VARIABLES DE ENTORNO (Opcional)")
-    print("=" * 60)
-    print()
-    print("Si Tesseract o Poppler no son detectados automáticamente:")
-    print()
-    print("Windows:")
-    print("  set TESSERACT_CMD=C:\\Program Files\\Tesseract-OCR\\tesseract.exe")
-    print("  set POPPLER_PATH=C:\\poppler\\Library\\bin")
-    print()
-    print("Linux/macOS:")
-    print("  export TESSERACT_CMD=/usr/bin/tesseract")
-    print("  export POPPLER_PATH=/usr/bin")
 
-    print("\n" + "=" * 60)
-
-    if not not_installed or (len(not_installed) <= 2 and "paddleocr" in [p.lower() for p in not_installed]):
-        print("✓ INSTALACIÓN COMPLETADA EXITOSAMENTE")
-        print()
-        print("Puedes ejecutar el sistema con:")
+    # Heurística de éxito:
+    # - OK absoluto si no falta nada
+    # - OK funcional si solo faltan paddlepaddle/paddleocr (la app corre con Tesseract)
+    missing = set(not_installed)
+    ok_even_if_missing_paddle = missing and missing.issubset({"paddlepaddle", "paddleocr"})
+    if not not_installed or ok_even_if_missing_paddle:
+        if ok_even_if_missing_paddle:
+            print("✓ INSTALACIÓN COMPLETADA (sin PaddleOCR). El sistema funcionará con Tesseract.")
+        else:
+            print("✓ INSTALACIÓN COMPLETADA EXITOSAMENTE")
+        print("\nPuedes ejecutar el sistema con:")
         print("  python main_enhanced.py")
+        exit_code = 0
     else:
         print("⚠ INSTALACIÓN PARCIALMENTE COMPLETADA")
-        print()
         print("Instala los paquetes faltantes manualmente antes de ejecutar el sistema.")
+        exit_code = 1
 
     print("=" * 60)
-
-    # Resumen rápido para lectura humana
     print(f"\nRESUMEN ▶ OK={len(installed)} | FALTAN={len(not_installed)}")
     input("\nPresiona Enter para terminar...")
-
-    # Código de salida para automatizaciones (0=ok, 1=faltantes)
-    sys.exit(0 if not not_installed else 1)
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     main()

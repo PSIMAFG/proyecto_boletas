@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # modules/utils.py
 """
 Utilidades compartidas para el procesamiento de boletas
@@ -256,3 +259,4 @@ def format_currency(amount: float) -> str:
         return f"${amount:,.0f}".replace(",", ".")
     except:
         return "$0"
+

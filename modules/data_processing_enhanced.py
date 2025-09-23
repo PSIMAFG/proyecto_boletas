@@ -1,3 +1,6 @@
+﻿# SPDX-License-Identifier: BUSL-1.1
+# © 2025 Matías A. Fernández
+
 # modules/data_processing_enhanced.py
 """
 Módulo de procesamiento de datos mejorado para trabajar con múltiples motores OCR
@@ -593,3 +596,4 @@ class EnhancedDataProcessor:
 
 # Alias para compatibilidad con código existente
 DataProcessor = EnhancedDataProcessor
+
