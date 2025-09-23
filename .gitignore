@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.env
+venv/
+.env*/
+.vscode/
+.idea/
+.dist/
+dist/
+build/
+*.log
+# carpetas de trabajo
+Registro/
+Export/
+debug_preproc/
+review_previews/
+# binarios externos
+bin/
