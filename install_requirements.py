@@ -11,14 +11,24 @@ import sys
 import platform
 import os
 import venv
+from typing import List, Optional
 
 
 
-def install_package(package: str) -> bool:
-    """Instala un paquete con pip (sin cache)"""
+def install_package(package: str, extra_args: Optional[List[str]] = None) -> bool:
+    """Instala un paquete con pip (sin cache).
+
+    Args:
+        package: Cadena del paquete (puede incluir versión o URL).
+        extra_args: Argumentos adicionales a pasar antes del nombre del paquete.
+    """
     try:
         print(f"Instalando {package}...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", package])
+        cmd = [sys.executable, "-m", "pip", "install", "--no-cache-dir"]
+        if extra_args:
+            cmd.extend(extra_args)
+        cmd.append(package)
+        subprocess.check_call(cmd)
         print(f"✓ {package} instalado correctamente")
         return True
     except subprocess.CalledProcessError:
@@ -74,20 +84,26 @@ def select_paddle_package(os_type: str, machine: str, version_info: sys.version_
             "3.9": "paddlepaddle==2.5.2",
             "3.10": "paddlepaddle==3.1.2",
             "3.11": "paddlepaddle==3.1.2",
+            "3.12": "paddlepaddle==3.2.0",
+            "3.13": "paddlepaddle==3.2.0",
         },
         ("windows", "arm64"): {
             "3.10": "paddlepaddle==2.5.2",
             "3.11": "paddlepaddle==2.5.2",
+            "3.12": "paddlepaddle==3.2.0",
+            "3.13": "paddlepaddle==3.2.0",
         },
         ("linux", "x86_64"): {
             "3.8": "paddlepaddle==2.6.1",
             "3.9": "paddlepaddle==2.6.1",
             "3.10": "paddlepaddle==2.6.1",
             "3.11": "paddlepaddle==2.6.1",
+            "3.12": "paddlepaddle==2.6.1",
         },
         ("linux", "aarch64"): {
             "3.10": "paddlepaddle==2.6.1",
             "3.11": "paddlepaddle==2.6.1",
+            "3.12": "paddlepaddle==2.6.1",
         },
         ("darwin", "x86_64"): {
             "3.9": "paddlepaddle==2.5.2",
@@ -101,7 +117,7 @@ def select_paddle_package(os_type: str, machine: str, version_info: sys.version_
     }
 
     fallback_per_os = {
-        "windows": "paddlepaddle==3.1.2",
+        "windows": "paddlepaddle==3.2.0",
         "linux": "paddlepaddle==2.6.1",
         "darwin": "paddlepaddle==2.5.2",
     }
@@ -123,7 +139,7 @@ def select_paddle_package(os_type: str, machine: str, version_info: sys.version_
                 f"{python_tag}; usando {chosen} (versión más estable disponible para {os_type} {machine})."
             )
     if not chosen:
-        default_pkg = fallback_per_os.get(normalized_os, "paddlepaddle==3.1.2")
+        default_pkg = fallback_per_os.get(normalized_os, "paddlepaddle==3.2.0")
         chosen = default_pkg
         print(
             "⚠ Plataforma no listada explícitamente en la matriz de compatibilidad. "
@@ -184,11 +200,47 @@ def main():
         print("  pip install paddlepaddle-gpu")
         failed.append(paddle_pkg)
 
-    if not install_package(paddleocr_pkg):
-        print("\n⚠ ADVERTENCIA: PaddleOCR no se pudo instalar.")
-        print("Intenta instalarlo manualmente con:")
-        print(f"  pip install {paddleocr_pkg}")
-        failed.append(paddleocr_pkg)
+    paddleocr_installed = install_package(paddleocr_pkg)
+    paddleocr_pdf_support = True
+    if not paddleocr_installed:
+        print("\n⚠ Intento alternativo: instalando PaddleOCR sin PyMuPDF (soporte PDF deshabilitado)...")
+        # PyMuPDF no ofrece binarios para Python 3.13 aún; instalamos PaddleOCR sin dependencias
+        # y luego añadimos las dependencias críticas manualmente (excepto PyMuPDF).
+        fallback_deps = [
+            "shapely",
+            "scikit-image",
+            "imgaug",
+            "pyclipper",
+            "lmdb",
+            "visualdl",
+            "rapidfuzz",
+            "opencv-python<=4.6.0.66",
+            "opencv-contrib-python<=4.6.0.66",
+            "cython",
+            "lxml",
+            "premailer",
+            "attrdict",
+            "PyYAML",
+            "python-docx",
+            "beautifulsoup4",
+            "fonttools>=4.24.0",
+            "fire>=0.3.0",
+            "pdf2docx",
+        ]
+
+        paddleocr_installed = install_package(paddleocr_pkg, extra_args=["--no-deps"])
+        if paddleocr_installed:
+            for dep in fallback_deps:
+                install_package(dep)
+            paddleocr_pdf_support = False
+        else:
+            print("\n⚠ ADVERTENCIA: PaddleOCR no se pudo instalar.")
+            print("Intenta instalarlo manualmente con:")
+            print(f"  pip install {paddleocr_pkg}")
+            failed.append(paddleocr_pkg)
+    elif os_type.lower() == "windows" and sys.version_info >= (3, 13):
+        # Incluso si la instalación pasó (p. ej. en un entorno con VS Build Tools), advertimos de PDF.
+        paddleocr_pdf_support = False
 
     print("\n3. VERIFICANDO INSTALACIÓN")
     print("-" * 40)
@@ -212,7 +264,17 @@ def main():
         try:
             __import__(mod)
             installed.append(base)
-        except Exception:
+        except Exception as exc:
+            if (
+                base == "paddleocr"
+                and paddleocr_installed
+                and not paddleocr_pdf_support
+                and isinstance(exc, ModuleNotFoundError)
+                and getattr(exc, "name", "") in {"fitz", "PyMuPDF"}
+            ):
+                # Se permite la ausencia de PyMuPDF en el fallback sin soporte PDF.
+                installed.append(base)
+                continue
             not_installed.append(base)
 
     # Tkinter: solo verificación (no se instala por pip)
@@ -226,6 +288,12 @@ def main():
     print("\n✓ Paquetes instalados correctamente:")
     for p in installed:
         print(f"  - {p}")
+
+    if paddleocr_installed and not paddleocr_pdf_support:
+        print(
+            "\n⚠ PaddleOCR instalado sin PyMuPDF: la conversión directa de PDF con PaddleOCR queda deshabilitada."
+        )
+        print("   El sistema seguirá funcionando con Tesseract y PaddleOCR para imágenes.")
 
     if not_installed:
         print("\n✗ Paquetes que requieren instalación manual:")
