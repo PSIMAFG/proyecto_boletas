@@ -265,10 +265,46 @@ def main():
     if force_manual:
         paddleocr_installed, paddleocr_pdf_support = manual_paddleocr_install()
         if not paddleocr_installed:
+    paddleocr_installed = install_package(paddleocr_pkg)
+    paddleocr_pdf_support = True
+    if not paddleocr_installed:
+        print("\n⚠ Intento alternativo: instalando PaddleOCR sin PyMuPDF (soporte PDF deshabilitado)...")
+        # PyMuPDF no ofrece binarios para Python 3.13 aún; instalamos PaddleOCR sin dependencias
+        # y luego añadimos las dependencias críticas manualmente (excepto PyMuPDF).
+        fallback_deps = [
+            "shapely",
+            "scikit-image",
+            "imgaug",
+            "pyclipper",
+            "lmdb",
+            "visualdl",
+            "rapidfuzz",
+            "opencv-python<=4.6.0.66",
+            "opencv-contrib-python<=4.6.0.66",
+            "cython",
+            "lxml",
+            "premailer",
+            "attrdict",
+            "PyYAML",
+            "python-docx",
+            "beautifulsoup4",
+            "fonttools>=4.24.0",
+            "fire>=0.3.0",
+            "pdf2docx",
+        ]
+
+        paddleocr_installed = install_package(paddleocr_pkg, extra_args=["--no-deps"])
+        if paddleocr_installed:
+            for dep in fallback_deps:
+                install_package(dep)
+            paddleocr_pdf_support = False
+        else:
+main
             print("\n⚠ ADVERTENCIA: PaddleOCR no se pudo instalar.")
             print("Intenta instalarlo manualmente con:")
             print(f"  pip install {paddleocr_pkg}")
             failed.append(paddleocr_pkg)
+
     else:
         paddleocr_installed = install_package(paddleocr_pkg)
         if not paddleocr_installed:
@@ -278,6 +314,11 @@ def main():
                 print("Intenta instalarlo manualmente con:")
                 print(f"  pip install {paddleocr_pkg}")
                 failed.append(paddleocr_pkg)
+
+    elif os_type.lower() == "windows" and sys.version_info >= (3, 13):
+        # Incluso si la instalación pasó (p. ej. en un entorno con VS Build Tools), advertimos de PDF.
+        paddleocr_pdf_support = False
+main
 
     print("\n3. VERIFICANDO INSTALACIÓN")
     print("-" * 40)
