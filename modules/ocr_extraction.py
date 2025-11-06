@@ -379,14 +379,16 @@ class OCRExtractorOptimized:
     
     def _save_preview(self, image: np.ndarray, source_path: Path, page_idx: int) -> str:
         """Guarda imagen de preview"""
-        preview_dir = Path("review_previews")
-        preview_dir.mkdir(exist_ok=True)
-        
-        filename = f"{source_path.stem}_p{page_idx+1}.png"
-        preview_path = preview_dir / filename
-        
         try:
+            # Usar la configuración global para el directorio de previews
+            preview_dir = REVIEW_PREVIEW_DIR
+            preview_dir.mkdir(exist_ok=True, parents=True)
+
+            filename = f"{source_path.stem}_p{page_idx+1}.png"
+            preview_path = preview_dir / filename
+
             cv2.imwrite(str(preview_path), image)
             return str(preview_path)
-        except Exception:
+        except Exception as e:
+            # Silenciar el error de preview, no debe detener el procesamiento
             return ""
