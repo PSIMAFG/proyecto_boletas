@@ -1,0 +1,977 @@
+{
+  "rut_to_name": {
+    "19.184.111-5": "Camila Albornoz Molina Clahe Otsu",
+    "13.369.175-8": "Valezka Galdames Vera",
+    "19.975.445-9": "Elizabeth Zarate Rojas",
+    "19.403.406-7": "Tamara Morales Meza",
+    "19.142.017-9": "Natalia Nilo Escobar",
+    "19.452.861-2": "Alexandros Yañez Vergara",
+    "13.196.527-3": "Carla Raffo Miranda",
+    "17.817.298-0": "Javiera Rojas Gonzalez",
+    "18.274.173-6": "Hernan Veliz Cortes",
+    "19.757.010-5": "Carolina Alvarez Maulen",
+    "20.310.701-3": "Camila Jerez Fuentes",
+    "19.361.001-3": "Camila Silva Rodriguez",
+    "18.583.811-0": "Daniel Contreras Pino",
+    "18.162.498-1": "Catalina Hernandez Canales",
+    "18.449.055-2": "Debora Malgue Arriagada",
+    "18.761.332-9": "Felipe Pavez Acevedo",
+    "25.413.756-1": "Gladys Marimon Puello",
+    "17.079.739-6": "Lissette Gonzalez Campos",
+    "12.826.051-K": "Margarita Soto Acevedo",
+    "16.772.892-8": "Natalia Pueyes Huencho",
+    "16.930.331-2": "Nicol Gonzalez Celis",
+    "18.448.996-1": "Paulina Carrasco Herrada",
+    "16.404.440-8": "Sarella Rios Navia",
+    "17.267.821-1": "Javiera Dadal Cabrera",
+    "17.078.529-0": "Catalina Abarca Wallis",
+    "17.456.716-6": "Fernanda Berrios Farias",
+    "18.448.569-9": "Nicol Ponce Astorga",
+    "19.786.596-2": "Tamara Ortega Fernandez",
+    "18.761.213-6": "Macarena Herrera Alarcon",
+    "10.941.942-7": "Marco Nuñez Llarrucea",
+    "20.962.378-1": "Luciano Tilleria Rubio",
+    "18.447.681-9": "Ana Sanchez Nuñez",
+    "19.405.285-5": "Barbara Ortiz Donoso",
+    "19.974.868-8": "Javiera Gonzalez Aljaro",
+    "19.757.411-9": "Leandra Zuñiga Mesa"
+  },
+  "name_to_rut": {
+    "elizabeth zarate rojas": "19.975.445-9",
+    "tamara morales meza": "19.403.406-7",
+    "por atencion profesiona": "19.184.111-5",
+    "natalia nilo escobar": "19.142.017-9",
+    "alexandros yanez vergara": "19.452.861-2",
+    "carla raffo miranda": "13.196.527-3",
+    "javiera rojas gonzalez": "17.817.298-0",
+    "hernan veliz cortes": "18.274.173-6",
+    "carolina alvarez maulen": "19.757.010-5",
+    "camila jerez fuentes": "20.310.701-3",
+    "camila silva rodriguez": "19.361.001-3",
+    "daniel contreras pino": "18.583.811-0",
+    "catalina hernandez canales": "18.162.498-1",
+    "debora malgue arriagada": "18.449.055-2",
+    "felipe pavez acevedo": "18.761.332-9",
+    "gladys marimon puello": "25.413.756-1",
+    "lissette gonzalez campos": "17.079.739-6",
+    "margarita soto acevedo": "12.826.051-K",
+    "natalia pueyes huencho": "16.772.892-8",
+    "nicol gonzalez celis": "16.930.331-2",
+    "paulina carrasco herrada": "18.448.996-1",
+    "valezka galdames vera": "13.369.175-8",
+    "sarella rios navia": "16.404.440-8",
+    "javiera dadal cabrera": "17.267.821-1",
+    "catalina abarca wallis": "17.078.529-0",
+    "fernanda berrios farias": "17.456.716-6",
+    "catalina abrca wallis": "17.078.529-0",
+    "por atencion profesional ys": "19.142.017-9",
+    "nicol ponce astorga": "18.448.569-9",
+    "tamara ortega fernandez": "19.786.596-2",
+    "macarena herrera alarcon": "18.761.213-6",
+    "natalia nilo escobar mes enero": "19.142.017-9",
+    "carla raffo miranda mes enero": "13.196.527-3",
+    "hernan veliz cortes mes enero": "18.274.173-6",
+    "por atencion profesional dd pa a ds": "19.452.861-2",
+    "alexandros yanez vergara mes enero": "19.452.861-2",
+    "carolina alvarez maulnen mes enero": "19.757.010-5",
+    "camila jerez fuentes mes enero": "20.310.701-3",
+    "camila silva rodriguez mes enero": "19.361.001-3",
+    "catalina hernandez canales mes enero": "18.162.498-1",
+    "daniel contreras pino mes enero": "18.583.811-0",
+    "debora malgue arriagada mes enero": "18.449.055-2",
+    "felipe pavez acevedo mes enero": "18.761.332-9",
+    "margarita soto acevedo mes enero": "12.826.051-K",
+    "natalia pueyes huencho mes enero": "16.772.892-8",
+    "nicol gonzalez celis mes enero": "16.930.331-2",
+    "paulina carrasco herrada mes enero": "18.448.996-1",
+    "tamara morales meza mes enero": "19.403.406-7",
+    "marco nunez llarrucea": "10.941.942-7",
+    "marco nunez larrucea": "10.941.942-7",
+    "por atencion profesional a e": "17.817.298-0",
+    "natalia nilo escobar mes febrero": "19.142.017-9",
+    "carla raffo miranda mes febrero": "13.196.527-3",
+    "hernan veliz cortes mes febrero": "18.274.173-6",
+    "por atencion profesional e": "17.817.298-0",
+    "javiera rojas gonzalez mes febrero": "17.817.298-0",
+    "alexandros yanez vergara mes febrero": "19.452.861-2",
+    "camila jerez fuentes mes febrero": "20.310.701-3",
+    "carolina alvarez maulen mes febrero": "19.757.010-5",
+    "camila silva rodriguez mes febrero": "19.361.001-3",
+    "catalina hernandez canales mes febrero": "18.162.498-1",
+    "elizabeth zarate rojas mes febrero": "19.975.445-9",
+    "felipe pavez acevedo mes febrero": "18.761.332-9",
+    "gladys marimon puello mes febrero": "25.413.756-1",
+    "javiera rojas gonzalez mes enero": "17.817.298-0",
+    "lissette gonzalez campos mes febrero": "17.079.739-6",
+    "margarita soto acevedo mes febrero": "12.826.051-K",
+    "paulina carrasco herrada mes febrero": "18.448.996-1",
+    "sarella rios navia mes febrero": "16.404.440-8",
+    "tamara morales meza mes febrero": "19.403.406-7",
+    "valezka galdames vera mes febrero": "13.369.175-8",
+    "por atencion profesional": "10.941.942-7",
+    "por atencion profesional d": "13.196.527-3",
+    "luciano tilleria rubio": "20.962.378-1",
+    "ana sanchez nunez": "18.447.681-9",
+    "barbara ortiz donoso": "19.405.285-5",
+    "javiera gonzalez aljaro": "19.974.868-8",
+    "javiera ramirez fajardo": "19.974.868-8",
+    "camila albornoz molina mes enero": "19.184.111-5",
+    "leandra zuniga mesa": "19.757.411-9",
+    "elizabeth zarate rojas mes enero": "19.975.445-9",
+    "lissette gonzalez campos mes enero": "17.079.739-6",
+    "gladys marimon puello mes enero": "25.413.756-1",
+    "sarella rios navia mes enero": "16.404.440-8",
+    "valezka galdames vera mes enero": "13.369.175-8",
+    "camila albornoz molina mes febrero": "19.184.111-5",
+    "daniel contreras pino mes febrero": "18.583.811-0",
+    "debora malgue arriagada mes febrero": "18.449.055-2",
+    "natalia pueyes huencho mes febrero": "16.772.892-8",
+    "nicol gonzalez celis mes febrero": "16.930.331-2"
+  },
+  "rut_to_convenio": {
+    "19.184.111-5": {
+      "DIR": 19
+    },
+    "13.369.175-8": {
+      "SALUD MENTAL": 28
+    },
+    "19.975.445-9": {
+      "SALUD MENTAL": 27
+    },
+    "19.403.406-7": {
+      "SALUD MENTAL": 25
+    },
+    "19.142.017-9": {
+      "DIR": 26,
+      "ACOMPAÑAMIENTO": 20
+    },
+    "19.452.861-2": {
+      "SALUD MENTAL": 52
+    },
+    "13.196.527-3": {
+      "ACOMPAÑAMIENTO": 24
+    },
+    "17.817.298-0": {
+      "ACOMPAÑAMIENTO": 24,
+      "SALUD MENTAL": 26
+    },
+    "18.274.173-6": {
+      "ACOMPAÑAMIENTO": 22,
+      "SALUD MENTAL": 30
+    },
+    "19.757.010-5": {
+      "SALUD MENTAL": 26,
+      "MEJOR NIÑEZ": 8
+    },
+    "20.310.701-3": {
+      "SALUD MENTAL": 26
+    },
+    "19.361.001-3": {
+      "SALUD MENTAL": 52
+    },
+    "18.583.811-0": {
+      "SALUD MENTAL": 26
+    },
+    "18.162.498-1": {
+      "SALUD MENTAL": 26,
+      "MEJOR NIÑEZ": 4
+    },
+    "18.449.055-2": {
+      "SALUD MENTAL": 26
+    },
+    "18.761.332-9": {
+      "SALUD MENTAL": 52
+    },
+    "25.413.756-1": {
+      "SALUD MENTAL": 24,
+      "DIR": 2
+    },
+    "17.079.739-6": {
+      "SALUD MENTAL": 18
+    },
+    "12.826.051-K": {
+      "SALUD MENTAL": 18
+    },
+    "16.772.892-8": {
+      "SALUD MENTAL": 26
+    },
+    "16.930.331-2": {
+      "SALUD MENTAL": 26
+    },
+    "18.448.996-1": {
+      "SALUD MENTAL": 24,
+      "DIR": 2
+    },
+    "16.404.440-8": {
+      "SALUD MENTAL": 26
+    },
+    "17.078.529-0": {
+      "ESPACIOS_AMIGABLES": 8,
+      "MEJOR NIÑEZ": 8
+    },
+    "17.456.716-6": {
+      "DIR": 10,
+      "AIDIA": 2
+    },
+    "17.267.821-1": {
+      "DIR": 12,
+      "ESPACIOS_AMIGABLES": 2,
+      "ESPACIOS AMIGABLES": 2
+    },
+    "18.448.569-9": {
+      "MEJOR NIÑEZ": 6
+    },
+    "19.786.596-2": {
+      "MEJOR NIÑEZ": 11,
+      "ESPACIOS_AMIGABLES": 2,
+      "ESPACIOS AMIGABLES": 1
+    },
+    "18.761.213-6": {
+      "AIDIA": 2
+    },
+    "10.941.942-7": {
+      "MEJOR NIÑEZ": 8
+    },
+    "20.962.378-1": {
+      "AIDIA": 2
+    },
+    "18.447.681-9": {
+      "AIDIA": 2
+    },
+    "19.405.285-5": {
+      "AIDIA": 2
+    },
+    "19.974.868-8": {
+      "AIDIA": 4
+    },
+    "19.757.411-9": {
+      "AIDIA": 2
+    }
+  },
+  "rut_stats": {
+    "19.184.111-5": {
+      "count": 19,
+      "last_seen": "2025-03-01",
+      "convenios": []
+    },
+    "13.369.175-8": {
+      "count": 28,
+      "last_seen": "2025-07-01",
+      "convenios": []
+    },
+    "19.975.445-9": {
+      "count": 27,
+      "last_seen": "2025-06-01",
+      "convenios": []
+    },
+    "19.403.406-7": {
+      "count": 25,
+      "last_seen": "2025-08-01",
+      "convenios": []
+    },
+    "19.142.017-9": {
+      "count": 46,
+      "last_seen": "2025-05-01",
+      "convenios": []
+    },
+    "19.452.861-2": {
+      "count": 52,
+      "last_seen": "2025-06-01",
+      "convenios": []
+    },
+    "13.196.527-3": {
+      "count": 24,
+      "last_seen": "2025-05-01",
+      "convenios": []
+    },
+    "17.817.298-0": {
+      "count": 50,
+      "last_seen": "2025-05-01",
+      "convenios": []
+    },
+    "18.274.173-6": {
+      "count": 52,
+      "last_seen": "2025-08-01",
+      "convenios": []
+    },
+    "19.757.010-5": {
+      "count": 34,
+      "last_seen": "2025-06-01",
+      "convenios": []
+    },
+    "20.310.701-3": {
+      "count": 26,
+      "last_seen": "2025-07-01",
+      "convenios": []
+    },
+    "19.361.001-3": {
+      "count": 52,
+      "last_seen": "2025-03-01",
+      "convenios": []
+    },
+    "18.583.811-0": {
+      "count": 26,
+      "last_seen": "2025-03-01",
+      "convenios": []
+    },
+    "18.162.498-1": {
+      "count": 30,
+      "last_seen": "2025-06-01",
+      "convenios": []
+    },
+    "18.449.055-2": {
+      "count": 26,
+      "last_seen": "2025-03-01",
+      "convenios": []
+    },
+    "18.761.332-9": {
+      "count": 52,
+      "last_seen": "2025-06-01",
+      "convenios": []
+    },
+    "25.413.756-1": {
+      "count": 26,
+      "last_seen": "2025-02-01",
+      "convenios": []
+    },
+    "17.079.739-6": {
+      "count": 18,
+      "last_seen": "2025-02-03",
+      "convenios": []
+    },
+    "12.826.051-K": {
+      "count": 18,
+      "last_seen": "2025-03-01",
+      "convenios": []
+    },
+    "16.772.892-8": {
+      "count": 26,
+      "last_seen": "2025-03-01",
+      "convenios": []
+    },
+    "16.930.331-2": {
+      "count": 26,
+      "last_seen": "2025-03-01",
+      "convenios": []
+    },
+    "18.448.996-1": {
+      "count": 26,
+      "last_seen": "2025-07-01",
+      "convenios": []
+    },
+    "16.404.440-8": {
+      "count": 26,
+      "last_seen": "2025-05-01",
+      "convenios": []
+    },
+    "17.267.821-1": {
+      "count": 18,
+      "last_seen": "2025-07-01",
+      "convenios": []
+    },
+    "17.078.529-0": {
+      "count": 16,
+      "last_seen": "2025-05-01",
+      "convenios": []
+    },
+    "17.456.716-6": {
+      "count": 12,
+      "last_seen": "2025-05-13",
+      "convenios": []
+    },
+    "18.448.569-9": {
+      "count": 6,
+      "last_seen": "2025-07-01",
+      "convenios": []
+    },
+    "19.786.596-2": {
+      "count": 16,
+      "last_seen": "2025-05-01",
+      "convenios": []
+    },
+    "18.761.213-6": {
+      "count": 2,
+      "last_seen": "2020-08-05",
+      "convenios": []
+    },
+    "10.941.942-7": {
+      "count": 8,
+      "last_seen": "2025-05-01",
+      "convenios": []
+    },
+    "20.962.378-1": {
+      "count": 2,
+      "last_seen": "2025-08-01",
+      "convenios": []
+    },
+    "18.447.681-9": {
+      "count": 2,
+      "last_seen": "2025-08-01",
+      "convenios": []
+    },
+    "19.405.285-5": {
+      "count": 2,
+      "last_seen": "2025-08-01",
+      "convenios": []
+    },
+    "19.974.868-8": {
+      "count": 4,
+      "last_seen": "2025-08-01",
+      "convenios": []
+    },
+    "19.757.411-9": {
+      "count": 2,
+      "last_seen": "2025-08-01",
+      "convenios": []
+    }
+  },
+  "name_variations": {
+    "19.184.111-5": [
+      "Camila Albornoz Molina Clahe Otsu",
+      "Por atención profesiona / /",
+      "Camila Albornoz Molina Mes Enero",
+      "Camila Albornoz Molina Mes Febrero"
+    ],
+    "13.369.175-8": [
+      "Valezka Galdames Vera",
+      "Valezka Galdames Vera Mes Febrero",
+      "Valezka Galdames Vera Mes Enero"
+    ],
+    "19.975.445-9": [
+      "Elizabeth Zarate Rojas",
+      "Elizabeth Zarate Rojas Mes Febrero",
+      "Elizabeth Zarate Rojas Mes Enero"
+    ],
+    "19.403.406-7": [
+      "Tamara Morales Meza",
+      "Tamara Morales Meza Mes Enero",
+      "Tamara Morales Meza Mes Febrero"
+    ],
+    "19.142.017-9": [
+      "Natalia Nilo Escobar",
+      "Por atención profesional; / yS",
+      "Natalia Nilo Escobar Mes Enero",
+      "Natalia Nilo Escobar Mes Febrero"
+    ],
+    "19.452.861-2": [
+      "Alexandros Yañez Vergara",
+      "Por atención profesional: / | | dd PA A DS",
+      "Alexandros Yañez Vergara Mes Enero",
+      "Alexandros Yañez Vergara Mes Febrero"
+    ],
+    "13.196.527-3": [
+      "Carla Raffo Miranda",
+      "Carla Raffo Miranda Mes Enero",
+      "Carla Raffo Miranda Mes Febrero",
+      "Por atención profesional: d /"
+    ],
+    "17.817.298-0": [
+      "Javiera Rojas Gonzalez",
+      "Por atención profesional: A E",
+      "Por atención profesional: / E",
+      "Javiera Rojas Gonzalez Mes Febrero",
+      "Javiera Rojas Gonzalez Mes Enero"
+    ],
+    "18.274.173-6": [
+      "Hernan Veliz Cortes",
+      "Hernan Veliz Cortes Mes Enero",
+      "Hernan Veliz Cortes Mes Febrero"
+    ],
+    "19.757.010-5": [
+      "Carolina Alvarez Maulen",
+      "Carolina Alvarez Maulñen Mes Enero",
+      "Carolina Alvarez Maulen Mes Febrero"
+    ],
+    "20.310.701-3": [
+      "Camila Jerez Fuentes",
+      "Camila Jerez Fuentes Mes Enero",
+      "Camila Jerez Fuentes Mes Febrero"
+    ],
+    "19.361.001-3": [
+      "Camila Silva Rodriguez",
+      "Camila Silva Rodriguez Mes Enero",
+      "Camila Silva Rodriguez Mes Febrero"
+    ],
+    "18.583.811-0": [
+      "Daniel Contreras Pino",
+      "Daniel Contreras Pino Mes Enero",
+      "Daniel Contreras Pino Mes Febrero"
+    ],
+    "18.162.498-1": [
+      "Catalina Hernandez Canales",
+      "Catalina Hernandez Canales Mes Enero",
+      "Catalina Hernandez Canales Mes Febrero"
+    ],
+    "18.449.055-2": [
+      "Debora Malgue Arriagada",
+      "Debora Malgue Arriagada Mes Enero",
+      "Debora Malgue Arriagada Mes Febrero"
+    ],
+    "18.761.332-9": [
+      "Felipe Pavez Acevedo",
+      "Felipe Pavez Acevedo Mes Enero",
+      "Felipe Pavez Acevedo Mes Febrero"
+    ],
+    "25.413.756-1": [
+      "Gladys Marimon Puello",
+      "Gladys Marimon Puello Mes Febrero",
+      "Gladys Marimon Puello Mes Enero"
+    ],
+    "17.079.739-6": [
+      "Lissette Gonzalez Campos",
+      "Lissette Gonzalez Campos Mes Febrero",
+      "Lissette Gonzalez Campos Mes Enero"
+    ],
+    "12.826.051-K": [
+      "Margarita Soto Acevedo",
+      "Margarita Soto Acevedo Mes Enero",
+      "Margarita Soto Acevedo Mes Febrero"
+    ],
+    "16.772.892-8": [
+      "Natalia Pueyes Huencho",
+      "Natalia Pueyes Huencho Mes Enero",
+      "Natalia Pueyes Huencho Mes Febrero"
+    ],
+    "16.930.331-2": [
+      "Nicol Gonzalez Celis",
+      "Nicol Gonzalez Celis Mes Enero",
+      "Nicol Gonzalez Celis Mes Febrero"
+    ],
+    "18.448.996-1": [
+      "Paulina Carrasco Herrada",
+      "Paulina Carrasco Herrada Mes Enero",
+      "Paulina Carrasco Herrada Mes Febrero"
+    ],
+    "16.404.440-8": [
+      "Sarella Rios Navia",
+      "Sarella Rios Navia Mes Febrero",
+      "Sarella Rios Navia Mes Enero"
+    ],
+    "17.267.821-1": [
+      "Javiera Dadal Cabrera",
+      "Por atención profesional: /"
+    ],
+    "17.078.529-0": [
+      "Catalina Abarca Wallis",
+      "Catalina Abrca Wallis"
+    ],
+    "17.456.716-6": [
+      "Fernanda Berrios Farias"
+    ],
+    "18.448.569-9": [
+      "Nicol Ponce Astorga"
+    ],
+    "19.786.596-2": [
+      "Tamara Ortega Fernandez"
+    ],
+    "18.761.213-6": [
+      "Macarena Herrera Alarcon"
+    ],
+    "10.941.942-7": [
+      "Marco Nuñez Llarrucea",
+      "Marco Nuñez Larrucea",
+      "Por atención profesional: - |"
+    ],
+    "20.962.378-1": [
+      "Luciano Tilleria Rubio"
+    ],
+    "18.447.681-9": [
+      "Ana Sanchez Nuñez"
+    ],
+    "19.405.285-5": [
+      "Barbara Ortiz Donoso"
+    ],
+    "19.974.868-8": [
+      "Javiera Gonzalez Aljaro",
+      "Javiera Ramirez Fajardo"
+    ],
+    "19.757.411-9": [
+      "Leandra Zuñiga Mesa"
+    ]
+  },
+  "processing_history": [],
+  "rut_decreto_to_payment": {
+    "19.184.111-5": {
+      "1861": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 2,
+        "last_updated": "2025-10-30T11:47:57.079371"
+      },
+      "616": {
+        "monto": "723448",
+        "horas": "22",
+        "count": 4,
+        "last_updated": "2025-10-30T12:35:18.091190"
+      }
+    },
+    "19.142.017-9": {
+      "1845": {
+        "monto": "526144",
+        "horas": "16",
+        "count": 7,
+        "last_updated": "2025-10-30T11:47:57.083379"
+      },
+      "1928": {
+        "monto": "1085172",
+        "horas": "33",
+        "count": 7,
+        "last_updated": "2025-10-30T11:49:01.194375"
+      },
+      "616": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 2,
+        "last_updated": "2025-10-30T12:43:22.550381"
+      }
+    },
+    "13.196.527-3": {
+      "612": {
+        "monto": "493260",
+        "horas": "15",
+        "count": 4,
+        "last_updated": "2025-10-30T11:49:01.194375"
+      }
+    },
+    "17.817.298-0": {
+      "612": {
+        "monto": "723448",
+        "horas": "22",
+        "count": 4,
+        "last_updated": "2025-10-30T11:49:01.199596"
+      },
+      "567": {
+        "monto": "624796",
+        "horas": "19",
+        "count": 4,
+        "last_updated": "2025-10-30T12:08:13.976859"
+      },
+      "2229": {
+        "monto": "920752",
+        "horas": "28",
+        "count": 5,
+        "last_updated": "2025-10-30T12:43:09.899116"
+      }
+    },
+    "18.274.173-6": {
+      "612": {
+        "monto": "1085172",
+        "horas": "33",
+        "count": 8,
+        "last_updated": "2025-10-30T11:49:01.199596"
+      },
+      "567": {
+        "monto": "246630",
+        "horas": "30",
+        "count": 1,
+        "last_updated": "2025-10-30T12:08:13.978755"
+      },
+      "3072": {
+        "monto": "205525",
+        "horas": "025",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.528112"
+      }
+    },
+    "18.583.811-0": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 11,
+        "last_updated": "2025-10-30T12:07:50.462425"
+      }
+    },
+    "19.975.445-9": {
+      "567": {
+        "monto": "723448",
+        "horas": "22",
+        "count": 11,
+        "last_updated": "2025-10-30T12:07:54.855467"
+      }
+    },
+    "17.079.739-6": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 6,
+        "last_updated": "2025-10-30T12:08:08.750371"
+      }
+    },
+    "19.403.406-7": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 10,
+        "last_updated": "2025-10-30T12:08:13.914835"
+      }
+    },
+    "19.757.010-5": {
+      "567": {
+        "monto": "723448",
+        "horas": "22",
+        "count": 8,
+        "last_updated": "2025-10-30T12:08:13.961588"
+      },
+      "2231": {
+        "monto": "920792",
+        "horas": "28",
+        "count": 1,
+        "last_updated": "2025-10-30T12:33:10.484728"
+      }
+    },
+    "19.452.861-2": {
+      "567": {
+        "monto": "618548",
+        "horas": "22",
+        "count": 1,
+        "last_updated": "2025-10-30T12:08:13.965875"
+      },
+      "2343": {
+        "monto": "493260",
+        "horas": "15",
+        "count": 1,
+        "last_updated": "2025-10-30T12:39:09.359376"
+      },
+      "3344": {
+        "monto": "1216708",
+        "horas": "",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.506270"
+      }
+    },
+    "20.310.701-3": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 6,
+        "last_updated": "2025-10-30T12:08:13.968757"
+      }
+    },
+    "19.361.001-3": {
+      "567": {
+        "monto": "1446896",
+        "horas": "27",
+        "count": 1,
+        "last_updated": "2025-10-30T12:08:13.969756"
+      }
+    },
+    "18.449.055-2": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 9,
+        "last_updated": "2025-10-30T12:08:13.973758"
+      }
+    },
+    "18.761.332-9": {
+      "567": {
+        "monto": "624796",
+        "horas": "19",
+        "count": 1,
+        "last_updated": "2025-10-30T12:08:13.975893"
+      }
+    },
+    "25.413.756-1": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 9,
+        "last_updated": "2025-10-30T12:08:13.978755"
+      }
+    },
+    "12.826.051-K": {
+      "567": {
+        "monto": "937515",
+        "horas": "",
+        "count": 1,
+        "last_updated": "2025-10-30T12:08:13.983627"
+      }
+    },
+    "13.369.175-8": {
+      "567": {
+        "monto": "723448",
+        "horas": "22",
+        "count": 10,
+        "last_updated": "2025-10-30T12:08:13.985767"
+      }
+    },
+    "16.930.331-2": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 9,
+        "last_updated": "2025-10-30T12:08:13.985767"
+      }
+    },
+    "16.772.892-8": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 3,
+        "last_updated": "2025-10-30T12:08:13.985767"
+      },
+      "5867": {
+        "monto": "1446896",
+        "horas": "",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.530085"
+      }
+    },
+    "16.404.440-8": {
+      "567": {
+        "monto": "1446896",
+        "horas": "",
+        "count": 3,
+        "last_updated": "2025-10-30T12:08:13.985767"
+      }
+    },
+    "18.448.996-1": {
+      "867": {
+        "monto": "246630",
+        "horas": "30",
+        "count": 1,
+        "last_updated": "2025-10-30T12:08:13.985767"
+      }
+    },
+    "17.267.821-1": {
+      "2240": {
+        "monto": "284994",
+        "horas": "20",
+        "count": 1,
+        "last_updated": "2025-10-30T12:33:02.219807"
+      },
+      "2245": {
+        "monto": "440660",
+        "horas": "11",
+        "count": 5,
+        "last_updated": "2025-10-30T12:36:57.925082"
+      },
+      "3443": {
+        "monto": "577662",
+        "horas": "31",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.486917"
+      }
+    },
+    "18.162.498-1": {
+      "567": {
+        "monto": "1446896",
+        "horas": "44",
+        "count": 2,
+        "last_updated": "2025-10-30T12:33:24.644245"
+      },
+      "2664": {
+        "monto": "164420",
+        "horas": "5",
+        "count": 2,
+        "last_updated": "2025-10-30T12:43:22.499190"
+      },
+      "587": {
+        "monto": "1446896",
+        "horas": "",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.728188"
+      }
+    },
+    "20.962.378-1": {
+      "3570": {
+        "monto": "806754",
+        "horas": "32",
+        "count": 2,
+        "last_updated": "2025-10-30T12:34:26.980470"
+      }
+    },
+    "19.405.285-5": {
+      "3570": {
+        "monto": "1157516",
+        "horas": "44",
+        "count": 2,
+        "last_updated": "2025-10-30T12:34:51.593766"
+      }
+    },
+    "19.974.868-8": {
+      "3570": {
+        "monto": "530528",
+        "horas": "22",
+        "count": 1,
+        "last_updated": "2025-10-30T12:35:03.046631"
+      }
+    },
+    "19.757.411-9": {
+      "3570": {
+        "monto": "1157516",
+        "horas": "44",
+        "count": 2,
+        "last_updated": "2025-10-30T12:35:43.454504"
+      }
+    },
+    "17.078.529-0": {
+      "2322": {
+        "monto": "440660",
+        "horas": "11",
+        "count": 6,
+        "last_updated": "2025-10-30T12:36:28.895282"
+      },
+      "2232": {
+        "monto": "675218",
+        "horas": "22",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.495175"
+      }
+    },
+    "18.448.569-9": {
+      "5": {
+        "monto": "164420",
+        "horas": "5",
+        "count": 2,
+        "last_updated": "2025-10-30T12:37:46.075625"
+      }
+    },
+    "19.786.596-2": {
+      "2245": {
+        "monto": "440660",
+        "horas": "11",
+        "count": 3,
+        "last_updated": "2025-10-30T12:43:22.477002"
+      },
+      "2304": {
+        "monto": "920752",
+        "horas": "28",
+        "count": 4,
+        "last_updated": "2025-10-30T12:43:22.504815"
+      }
+    },
+    "10.941.942-7": {
+      "2232": {
+        "monto": "452736",
+        "horas": "6",
+        "count": 4,
+        "last_updated": "2025-10-30T12:43:22.501318"
+      }
+    },
+    "18.761.213-6": {
+      "3625": {
+        "monto": "819907",
+        "horas": "44",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.541917"
+      }
+    },
+    "18.447.681-9": {
+      "3570": {
+        "monto": "578758",
+        "horas": "22",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.543916"
+      }
+    },
+    "17.456.716-6": {
+      "3570": {
+        "monto": "868137",
+        "horas": "33",
+        "count": 1,
+        "last_updated": "2025-10-30T12:43:22.548399"
+      }
+    }
+  }
+}

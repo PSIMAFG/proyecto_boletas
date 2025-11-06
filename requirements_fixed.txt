@@ -1,0 +1,27 @@
+# Requirements compatibles con Python 3.12
+# Usar versiones precompiladas (wheels)
+
+# Numpy compatible (versión que funciona con Python 3.12)
+numpy==1.26.4
+
+# OpenCV (versión headless, sin GUI)
+opencv-python-headless==4.10.0.84
+
+# Tesseract wrapper
+pytesseract==0.3.10
+
+# PDF a imagen
+pdf2image==1.17.0
+
+# Pillow (manejo de imágenes)
+pillow==10.4.0
+
+# Pandas (versión compatible con numpy 1.26.4)
+pandas==2.2.2
+
+# Excel support
+openpyxl==3.1.5
+xlsxwriter==3.2.0
+
+# PDF reader
+pypdf==4.3.1
