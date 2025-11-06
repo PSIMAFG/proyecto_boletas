@@ -111,3 +111,24 @@ MESES = {
 }
 
 MESES_SHORT = {'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'}
+
+# Mapeo de números a nombres de meses
+MONTH_NAMES = {
+    1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
+    7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+}
+
+# Razones de revisión
+REVIEW_REASON_NO_DATE = "Sin_mes_desde_Fecha (posible ticket/tapa OCR)"
+REVIEW_REASON_LOW_CONFIDENCE = "Baja_confianza_OCR"
+
+# Orígenes de datos
+DATA_SOURCE_BATCH = 'batch_post'
+DATA_SOURCE_MEMORY = 'memoria_post'
+DATA_SOURCE_DECREE_INFERRED = 'decreto_inferido'
+DATA_SOURCE_CONVENTION_INFERRED = 'convenio_inferido'
+DATA_SOURCE_USER = 'usuario'
+
+# Configuración de la aplicación
+APP_VERSION = "4.0 FINAL"
+APP_TITLE = "Sistema de Boletas OCR"

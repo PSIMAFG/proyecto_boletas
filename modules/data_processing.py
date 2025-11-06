@@ -11,12 +11,10 @@ import re
 import difflib
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple
-import numpy as np
 from datetime import datetime
 import sys
 import unicodedata
 from collections import defaultdict, Counter
-from datetime import datetime
 
 
 
@@ -1286,7 +1284,7 @@ class DataProcessorOptimized:
                 raise ValueError("No se pudo extraer texto")
             
             texto_completo = "\n".join(texts)
-            confianza_promedio = float(np.mean(confidences)) if confidences else 0.0
+            confianza_promedio = sum(confidences) / len(confidences) if confidences else 0.0
             
             # Paso 2: PRIMERA PASADA - Extracción inicial
             campos = self._extract_all_fields(texto_completo, file_path)

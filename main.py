@@ -15,7 +15,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from PIL import Image, ImageTk
 import sys
 import os
-import json
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple  
 
