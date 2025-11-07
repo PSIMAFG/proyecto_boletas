@@ -702,6 +702,8 @@ class BoletasApp(tk.Tk):
 
         except Exception as e:
             self.log(f"Error generando Excel: {e}", "error")
+            self.log(f"Tipo de error: {type(e).__name__}", "error")
+            self.log(f"Traceback: {traceback.format_exc()}", "error")
             try:
                 if 'tmp_file' in locals() and Path(tmp_file).exists():
                     Path(tmp_file).unlink(missing_ok=True)
