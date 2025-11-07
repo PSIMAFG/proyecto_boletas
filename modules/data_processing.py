@@ -613,8 +613,9 @@ class FieldExtractor:
                 s = s.replace(',', '').replace('.', '')
             return s
 
+        # Usar la función global plaus_amount en lugar de una local más restrictiva
         def plausible(v: float) -> bool:
-            return 200000 <= v <= 2000000
+            return plaus_amount(v)
 
         kw_re = re.compile(r'(?i)total\s+honorarios?\b')
         money_re = re.compile(r'\$\s*([\d\.\,\s]+)|\b(\d{1,3}(?:[.,]\d{3}){1,3})\b')
@@ -665,14 +666,20 @@ class FieldExtractor:
     def extract_montos_prefer_bruto(self, text: str):
         """
         Devuelve (monto_bruto, monto_liquido, conf, origen)
-        - Intenta extraer explícitos: 'Total Honorarios' (bruto) y 'Líquido Pagado' (líquido)
-        - Si ambos existen, usa el MAYOR como bruto. Si están a ≤3% de diferencia, se prefiere el mayor igual.
-        - Si solo hay uno, lo devuelve en su casilla y marca el origen.
+        - Intenta extraer explícitos: 'Total Honorarios' (bruto) y 'Líquido/Neto' (líquido)
+        - Valida que líquido < bruto (después de retenciones)
+        - Si hay ambiguedad, marca para revisión manual
         """
         t = re.sub(r'[|]+', ' ', text or '')
-        bruto_pat  = re.compile(r'(?i)total\s+honorarios?\s*\$?\s*[:\-]?\s*([\d\.\s,]+)')
-        liq_pat    = re.compile(r'(?i)l[ií]quido(?:\s+pagado)?\s*\$?\s*[:\-]?\s*([\d\.\s,]+)')
-        any_money  = re.compile(r'\$\s*([\d\.\,\s]+)|\b(\d{1,3}(?:[.,]\d{3}){1,3})\b')
+
+        # Patrones más específicos para evitar falsos positivos
+        bruto_pat  = re.compile(r'(?i)(?:total\s+)?honorarios?\s*(?:brutos?)?\s*\$?\s*[:\-]?\s*([\d\.\s,]+)')
+        liq_pat    = re.compile(r'(?i)(?:l[ií]quido|neto)(?:\s+(?:pagado|a\s+pagar))?\s*\$?\s*[:\-]?\s*([\d\.\s,]+)')
+
+        # Patrón para excluir números de boleta (típicamente 1-4 dígitos sin separadores)
+        def is_likely_boleta_num(s: str) -> bool:
+            clean = re.sub(r'[^\d]', '', s)
+            return len(clean) <= 4
 
         def norm_money(s):
             s = re.sub(r'[^\d,.\s]', '', s).replace(' ', '')
@@ -682,47 +689,80 @@ class FieldExtractor:
             else:
                 s = s.replace('.', '').replace(',', '')
             try:
-                return float(s)
-            except: 
+                val = float(s)
+                # Validar que esté en rango plausible
+                if plaus_amount(val):
+                    return val
+                return None
+            except:
                 return None
 
         bruto = None; liq = None; origen_b = None; origen_l = None
-        m = bruto_pat.search(t)
-        if m:
-            v = norm_money(m.group(1))
-            if v: bruto, origen_b = v, 'explicito_total_honorarios'
-        m = liq_pat.search(t)
-        if m:
-            v = norm_money(m.group(1))
-            if v: liq, origen_l = v, 'explicito_liquido'
 
-        # Si ninguno, intenta un legacy de “mejor candidato”
+        # Buscar monto bruto con contexto
+        for m in bruto_pat.finditer(t):
+            raw = m.group(1)
+            if is_likely_boleta_num(raw):
+                continue
+            v = norm_money(raw)
+            if v and v >= 10000:  # Mínimo razonable para honorarios
+                # Preferir el primer match válido con etiqueta "Total Honorarios"
+                if not bruto or 'total' in m.group(0).lower():
+                    bruto, origen_b = v, 'explicito_total_honorarios'
+                    break
+
+        # Buscar líquido con contexto
+        for m in liq_pat.finditer(t):
+            raw = m.group(1)
+            if is_likely_boleta_num(raw):
+                continue
+            v = norm_money(raw)
+            if v and v >= 10000:
+                liq, origen_l = v, 'explicito_liquido'
+                break
+
+        # Si ninguno encontrado, usar extractor legacy
         conf = 0.0
         if bruto is None and liq is None:
-            # prueba con tu extractor legacy
             monto_legacy, conf_legacy = self.extract_monto(text)
             if monto_legacy:
-                bruto = float(monto_legacy); origen_b = 'ocr_legacy'
+                bruto = float(monto_legacy)
+                origen_b = 'ocr_legacy'
                 conf = max(conf, conf_legacy or 0.75)
 
-        # Si solo salió uno, devuélvelo en su casilla
+        # Validaciones y lógica de retorno
         if bruto is not None and liq is None:
             return int(bruto), None, max(conf, 0.90), origen_b
+
         if liq is not None and bruto is None:
             return None, int(liq), max(conf, 0.85), origen_l
 
-        # Si ambos existen: el mayor es el bruto
+        # Si ambos existen: validar que tenga sentido (líquido < bruto)
         if bruto is not None and liq is not None:
-            # si OCR invirtió, corrige
-            if liq > bruto:
-                bruto, liq = liq, bruto
-                origen_b, origen_l = (origen_l or 'mayor_ajustado'), (origen_b or 'menor_ajustado')
-            # si están muy cerca, igual tomar el mayor como bruto
-            diff = abs(bruto - (liq or 0)) / max(bruto, 1)
-            base_conf = 0.92 if diff > 0.03 else 0.95
-            return int(bruto), int(liq), base_conf, (origen_b or 'mayor')
+            # En Chile, el líquido DEBE ser menor que el bruto (retención ~13-15%)
+            if liq < bruto:
+                # Validar que la diferencia sea razonable (10-20% típicamente)
+                diff_pct = (bruto - liq) / bruto
+                if 0.05 <= diff_pct <= 0.25:  # Entre 5% y 25% de retención
+                    return int(bruto), int(liq), 0.95, origen_b
+                else:
+                    # Diferencia sospechosa, pero mantener si origen es explícito
+                    return int(bruto), int(liq), 0.85, origen_b
+            else:
+                # líquido >= bruto: datos inconsistentes
+                # Intentar determinar cuál es el correcto
+                if origen_b and 'total' in origen_b.lower():
+                    # Si bruto tiene etiqueta clara, usarlo
+                    return int(bruto), None, 0.80, origen_b + '_liq_invalido'
+                elif origen_l and 'liquido' in origen_l.lower():
+                    # Si líquido tiene etiqueta clara, usarlo
+                    return None, int(liq), 0.80, origen_l + '_bruto_invalido'
+                else:
+                    # Ambiguo: usar el menor como bruto (más conservador)
+                    val = min(bruto, liq)
+                    return int(val), None, 0.70, 'ambiguo_menor'
 
-        # Nada confiable
+        # Sin datos confiables
         return None, None, 0.0, ''
 
     
