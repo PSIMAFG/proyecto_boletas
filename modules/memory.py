@@ -16,9 +16,20 @@ from datetime import datetime
 
 class Memory:
     """Sistema de memoria bidireccional para autocompletado inteligente"""
-    
-    def __init__(self, path: Path = Path("memory.json")):
-        self.path = Path(path)
+
+    def __init__(self, path: Path = None):
+        # Usar directorio Export si no se especifica ruta
+        if path is None:
+            import sys
+            from pathlib import Path as P
+            sys.path.append(str(P(__file__).parent.parent))
+            try:
+                from config import EXPORT_DIR
+                self.path = EXPORT_DIR / "memory.json"
+            except:
+                self.path = Path("memory.json")
+        else:
+            self.path = Path(path)
         self.data = {
             "rut_to_name": {},           # RUT → nombre
             "name_to_rut": {},           # NOMBRE → RUT
@@ -43,13 +54,31 @@ class Memory:
                 print(f"⚠️ No se pudo cargar memoria: {e}")
     
     def save(self):
-        """Guarda memoria en JSON"""
+        """Guarda memoria en JSON con manejo robusto de errores"""
         try:
+            # Asegurar que el directorio existe
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            self.path.write_text(
+
+            # Intentar guardar primero en archivo temporal
+            temp_path = self.path.with_suffix('.tmp')
+            temp_path.write_text(
                 json.dumps(self.data, ensure_ascii=False, indent=2),
                 encoding="utf-8"
             )
+
+            # Reemplazar atómicamente el archivo original
+            import os
+            try:
+                os.replace(temp_path, self.path)
+            except Exception:
+                # Fallback: copiar y borrar
+                import shutil
+                shutil.copy2(temp_path, self.path)
+                temp_path.unlink(missing_ok=True)
+
+        except PermissionError as e:
+            print(f"⚠️ Error de permisos al guardar memoria en {self.path}: {e}")
+            print(f"   Intente ejecutar el programa con permisos de administrador o cambie la ruta de memoria.")
         except Exception as e:
             print(f"⚠️ No se pudo guardar memoria: {e}")
     

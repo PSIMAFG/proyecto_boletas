@@ -386,28 +386,62 @@ class FieldExtractor:
         rex_num = re.compile(r'\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b')
 
         def parse_texto(m):
+            """Parsea formato texto: '15 de marzo de 2025'"""
             d = int(m.group(1))
             mes = m.group(2).lower().replace('setiembre', 'septiembre')
             y = int(m.group(3))
             y = y + 2000 if y < 100 else y
             mm = self.meses.get(mes, 0)
+
             if 1 <= d <= 31 and 1 <= mm <= 12 and 2015 <= y <= 2035:
                 try:
-                    return datetime(y, mm, d)
+                    dt = datetime(y, mm, d)
+                    # Validar que no sea fecha futura o muy antigua
+                    from datetime import timedelta
+                    max_future = datetime.now() + timedelta(days=31)
+                    min_past = datetime.now() - timedelta(days=3650)  # 10 años
+                    if min_past <= dt <= max_future:
+                        return dt
                 except:
                     return None
             return None
 
         def parse_num(m):
+            """Parsea formato numérico DD/MM/YYYY o DD-MM-YYYY"""
             d = int(m.group(1))
             mm = int(m.group(2))
             y = int(m.group(3))
             y = y + 2000 if y < 100 else y
-            if 1 <= d <= 31 and 1 <= mm <= 12 and 2015 <= y <= 2035:
+
+            # Validar rangos básicos
+            if not (2015 <= y <= 2035):
+                return None
+
+            # Intentar como DD/MM/YYYY (formato chileno común)
+            if 1 <= d <= 31 and 1 <= mm <= 12:
                 try:
-                    return datetime(y, mm, d)
+                    dt = datetime(y, mm, d)
+                    # Validar que no sea fecha futura (permitir hasta 1 mes adelante)
+                    from datetime import timedelta
+                    max_future = datetime.now() + timedelta(days=31)
+                    min_past = datetime.now() - timedelta(days=3650)  # 10 años
+                    if min_past <= dt <= max_future:
+                        return dt
                 except:
-                    return None
+                    pass
+
+            # Si falla, intentar como MM/DD/YYYY (menos común en Chile)
+            if 1 <= mm <= 31 and 1 <= d <= 12:
+                try:
+                    dt = datetime(y, d, mm)  # swap d y mm
+                    from datetime import timedelta
+                    max_future = datetime.now() + timedelta(days=31)
+                    min_past = datetime.now() - timedelta(days=3650)
+                    if min_past <= dt <= max_future:
+                        return dt
+                except:
+                    pass
+
             return None
 
         candidatos = []
@@ -893,25 +927,60 @@ class FieldExtractor:
         """Valida si texto es nombre válido"""
         if not text or len(text) < 5 or len(text) > 100:
             return False
-        
+
+        # Limpiar espacios múltiples
         text_clean = re.sub(r'\s+', ' ', text).strip()
-        
+
+        # Rechazar si tiene demasiados números (más de 2)
         if len(re.findall(r'\d', text_clean)) > 2:
             return False
-        
+
+        # Rechazar si contiene demasiadas barras o caracteres especiales raros
+        if text_clean.count('/') > 2 or text_clean.count('\\') > 0:
+            return False
+
+        # Rechazar si empieza con caracteres raros
+        if re.match(r'^[^a-zA-ZÁÉÍÓÚÑáéíóúñ]+', text_clean):
+            return False
+
+        # Palabras de rechazo expandidas
         palabras_rechazo = {
             'municipalidad', 'boleta', 'honorarios', 'rut', 'fecha',
-            'monto', 'total', 'documento', 'folio', 'servicio'
+            'monto', 'total', 'documento', 'folio', 'servicio',
+            'atención', 'atencion', 'profesional', 'pago', 'decreto',
+            'convenio', 'glosa', 'periodo', 'por', 'd /', 'www', 'http'
         }
-        
+
         text_lower = text_clean.lower()
+
+        # Rechazar si contiene cualquier palabra de rechazo
         if any(palabra in text_lower for palabra in palabras_rechazo):
             return False
-        
+
+        # Rechazar frases completas comunes de OCR basura
+        frases_rechazo = [
+            r'por\s+atenci[oó]n\s+profesional',
+            r'd\s*/\s*\.+',
+            r'^\s*d\s+/',
+            r'^\s*por\s+',
+            r'^\s*de\s+',
+            r'^\s*[:/\-\.]+\s*',
+        ]
+        for frase in frases_rechazo:
+            if re.search(frase, text_lower):
+                return False
+
+        # Debe tener al menos 2 palabras
         palabras = text_clean.split()
         if len(palabras) < 2:
             return False
-        
+
+        # Debe tener al menos un 50% de letras
+        total_chars = len(re.sub(r'\s', '', text_clean))
+        letras = len(re.findall(r'[a-zA-ZÁÉÍÓÚÑáéíóúñ]', text_clean))
+        if total_chars > 0 and (letras / total_chars) < 0.5:
+            return False
+
         return True
     
     def _extract_name_from_filename(self, path: Path) -> str:

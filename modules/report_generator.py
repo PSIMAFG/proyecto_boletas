@@ -66,6 +66,9 @@ class ReportGenerator:
         df_main.to_excel(writer, sheet_name='Base de Datos', index=False)
         self._format_main_sheet(writer, 'Base de Datos', df_main, formats)
 
+        # NUEVO: Agregar hoja de Resumen Global con fórmulas dinámicas
+        self._create_summary_sheet(writer, df_main, formats)
+
         # Hojas por convenio
         if generate_reports:
             self._generate_convention_reports(writer, df_main, formats)
@@ -209,12 +212,99 @@ class ReportGenerator:
         for col, width in column_widths.items():
             worksheet.set_column(f'{col}:{col}', width)
 
-        # Encabezados (ya estÃ¡n escritos por pandas; aquÃ­ los re-formateamos)
+        # Encabezados (ya están escritos por pandas; aquí los re-formateamos)
         for col_num, value in enumerate(df.columns[:15]):
             worksheet.write(0, col_num, value, formats['header'])
 
         worksheet.freeze_panes(1, 0)
         worksheet.autofilter(0, 0, len(df), 14)
+
+    def _create_summary_sheet(self, writer, df_main: pd.DataFrame, formats: Dict):
+        """Crea hoja de resumen global con fórmulas dinámicas"""
+        workbook = writer.book
+        worksheet = workbook.add_worksheet('Resumen Global')
+
+        row = 0
+
+        # Título
+        worksheet.merge_range(row, 0, row, 5, "RESUMEN GENERAL - TOTALES DINÁMICOS", formats['title'])
+        row += 2
+
+        # Nota importante
+        worksheet.merge_range(row, 0, row, 5,
+                             "Nota: Estos totales se actualizan automáticamente al editar la hoja 'Base de Datos'",
+                             formats['warning'])
+        row += 2
+
+        # Estadísticas generales con fórmulas
+        last_row = len(df_main) + 1  # +1 porque la fila 1 es header
+
+        worksheet.write(row, 0, "TOTAL DE BOLETAS:", formats['subtitle'])
+        worksheet.write_formula(row, 1, f"=COUNTA('Base de Datos'!B2:B{last_row})", formats['text_center'])
+        row += 1
+
+        worksheet.write(row, 0, "MONTO TOTAL:", formats['subtitle'])
+        worksheet.write_formula(row, 1, f"=SUM('Base de Datos'!F2:F{last_row})", formats['total'])
+        row += 1
+
+        worksheet.write(row, 0, "PROMEDIO POR BOLETA:", formats['subtitle'])
+        worksheet.write_formula(row, 1, f"=AVERAGE('Base de Datos'!F2:F{last_row})", formats['currency_bold'])
+        row += 1
+
+        worksheet.write(row, 0, "MONTO MÍNIMO:", formats['subtitle'])
+        worksheet.write_formula(row, 1, f"=MIN('Base de Datos'!F2:F{last_row})", formats['currency'])
+        row += 1
+
+        worksheet.write(row, 0, "MONTO MÁXIMO:", formats['subtitle'])
+        worksheet.write_formula(row, 1, f"=MAX('Base de Datos'!F2:F{last_row})", formats['currency'])
+        row += 1
+
+        worksheet.write(row, 0, "PROFESIONALES ÚNICOS:", formats['subtitle'])
+        # Contar únicos usando SUMPRODUCT + COUNTIF
+        worksheet.write_formula(row, 1, f"=SUMPRODUCT(1/COUNTIF('Base de Datos'!B2:B{last_row},'Base de Datos'!B2:B{last_row}))",
+                               formats['text_center'])
+        row += 2
+
+        # Resumen por convenio (dinámico)
+        worksheet.merge_range(row, 0, row, 3, "RESUMEN POR CONVENIO (DINÁMICO)", formats['subtitle'])
+        row += 1
+
+        worksheet.write(row, 0, "Convenio", formats['header'])
+        worksheet.write(row, 1, "Cantidad", formats['header'])
+        worksheet.write(row, 2, "Total", formats['header'])
+        worksheet.write(row, 3, "Promedio", formats['header'])
+        row += 1
+
+        # Obtener convenios únicos para crear fórmulas
+        convenios_unicos = df_main['convenio'].unique()
+        for convenio in convenios_unicos:
+            if not convenio:
+                convenio = "(Sin Convenio)"
+
+            worksheet.write(row, 0, convenio, formats['text'])
+
+            # COUNTIF para contar
+            worksheet.write_formula(row, 1,
+                                   f"=COUNTIF('Base de Datos'!G2:G{last_row},\"{convenio}\")",
+                                   formats['text_center'])
+
+            # SUMIF para sumar
+            worksheet.write_formula(row, 2,
+                                   f"=SUMIF('Base de Datos'!G2:G{last_row},\"{convenio}\",'Base de Datos'!F2:F{last_row})",
+                                   formats['currency'])
+
+            # AVERAGEIF para promedio
+            worksheet.write_formula(row, 3,
+                                   f"=AVERAGEIF('Base de Datos'!G2:G{last_row},\"{convenio}\",'Base de Datos'!F2:F{last_row})",
+                                   formats['currency'])
+
+            row += 1
+
+        # Anchos de columna
+        worksheet.set_column('A:A', 30)
+        worksheet.set_column('B:B', 15)
+        worksheet.set_column('C:C', 18)
+        worksheet.set_column('D:D', 18)
 
     def _generate_convention_reports(self, writer, df_main: pd.DataFrame, formats: Dict):
         """Genera hojas de informe por cada convenio"""
@@ -468,14 +558,18 @@ class ReportGenerator:
     def generate_individual_professional_reports(self, df: pd.DataFrame, output_dir: Path):
         """
         Genera un archivo Excel individual por cada profesional
-        
+
         Args:
             df: DataFrame con todos los registros procesados
             output_dir: Directorio donde guardar los archivos individuales
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
+        # CRÍTICO: Asegurar que monto_num existe ANTES de continuar
+        if 'monto_num' not in df.columns or df['monto_num'].isna().all():
+            df['monto_num'] = pd.to_numeric(df.get('monto', 0), errors='coerce').fillna(0)
+
         # Agrupar por RUT (verificando coherencia con nombre)
         profesionales = self._group_by_professional(df)
         
@@ -493,14 +587,22 @@ class ReportGenerator:
         """
         Agrupa registros por profesional, verificando coherencia nombre-RUT
         """
+        # Asegurar que monto_num existe ANTES de cualquier operación
+        if 'monto_num' not in df.columns:
+            df['monto_num'] = pd.to_numeric(df.get('monto', 0), errors='coerce').fillna(0)
+
         profesionales = {}
-        
+
         # Agrupar por RUT
         for rut in df['rut'].unique():
             if not rut or pd.isna(rut):
                 continue
-            
+
             registros_rut = df[df['rut'] == rut].copy()
+
+            # Asegurar monto_num en cada grupo también
+            if 'monto_num' not in registros_rut.columns:
+                registros_rut['monto_num'] = pd.to_numeric(registros_rut.get('monto', 0), errors='coerce').fillna(0)
             
             # Verificar coherencia de nombres
             nombres = registros_rut['nombre'].dropna().unique()
