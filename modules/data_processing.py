@@ -666,62 +666,89 @@ class FieldExtractor:
     def extract_montos_prefer_bruto(self, text: str):
         """
         Devuelve (monto_bruto, monto_liquido, conf, origen)
-        - Intenta extraer explícitos: 'Total Honorarios' (bruto) y 'Líquido/Neto' (líquido)
-        - Valida que líquido < bruto (después de retenciones)
-        - Si hay ambiguedad, marca para revisión manual
+        - Búsqueda agresiva de 'Total Honorarios' (bruto) y 'Líquido' (neto)
+        - Valida coherencia: líquido < bruto con diferencia razonable
+        - Prioriza etiquetas explícitas sobre posición
         """
         t = re.sub(r'[|]+', ' ', text or '')
 
-        # Patrones más específicos para evitar falsos positivos
-        bruto_pat  = re.compile(r'(?i)(?:total\s+)?honorarios?\s*(?:brutos?)?\s*\$?\s*[:\-]?\s*([\d\.\s,]+)')
-        liq_pat    = re.compile(r'(?i)(?:l[ií]quido|neto)(?:\s+(?:pagado|a\s+pagar))?\s*\$?\s*[:\-]?\s*([\d\.\s,]+)')
+        # Patrones MÁS ROBUSTOS con múltiples variantes
+        bruto_patterns = [
+            r'(?i)total\s+honorarios?\s*(?:brutos?)?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
+            r'(?i)honorarios?\s*(?:brutos?)?\s*total\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
+            r'(?i)honorarios?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',  # Honorarios suelto
+            r'(?i)total\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',  # Total + monto (más genérico, menor prioridad)
+        ]
 
-        # Patrón para excluir números de boleta (típicamente 1-4 dígitos sin separadores)
+        liq_patterns = [
+            r'(?i)(?:monto\s+)?l[ií]quido(?:\s+(?:pagado|a\s+pagar))?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
+            r'(?i)(?:monto\s+)?neto\s*(?:pagado)?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
+            r'(?i)total\s+a\s+pagar\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
+        ]
+
         def is_likely_boleta_num(s: str) -> bool:
+            """Excluir números de boleta/folio (1-4 dígitos)"""
             clean = re.sub(r'[^\d]', '', s)
             return len(clean) <= 4
 
         def norm_money(s):
+            """Normaliza string de monto a float"""
             s = re.sub(r'[^\d,.\s]', '', s).replace(' ', '')
-            # normaliza miles
             if s.count('.') + s.count(',') > 1:
                 s = s.replace('.', '').replace(',', '')
             else:
                 s = s.replace('.', '').replace(',', '')
             try:
                 val = float(s)
-                # Validar que esté en rango plausible
                 if plaus_amount(val):
                     return val
                 return None
             except:
                 return None
 
-        bruto = None; liq = None; origen_b = None; origen_l = None
+        # Buscar TODOS los candidatos con sus prioridades
+        bruto_candidates = []
+        liq_candidates = []
 
-        # Buscar monto bruto con contexto
-        for m in bruto_pat.finditer(t):
-            raw = m.group(1)
-            if is_likely_boleta_num(raw):
-                continue
-            v = norm_money(raw)
-            if v and v >= 10000:  # Mínimo razonable para honorarios
-                # Preferir el primer match válido con etiqueta "Total Honorarios"
-                if not bruto or 'total' in m.group(0).lower():
-                    bruto, origen_b = v, 'explicito_total_honorarios'
-                    break
+        # Buscar bruto con diferentes patrones (orden = prioridad)
+        for priority, pattern in enumerate(bruto_patterns):
+            for m in re.finditer(pattern, t):
+                raw = m.group(1)
+                if is_likely_boleta_num(raw):
+                    continue
+                v = norm_money(raw)
+                if v and v >= 10000:
+                    # Score: prioridad del patrón + boost si tiene "total"
+                    score = (len(bruto_patterns) - priority) * 10
+                    if 'total' in m.group(0).lower():
+                        score += 20
+                    bruto_candidates.append((score, v, m.group(0), 'explicito_honorarios'))
 
-        # Buscar líquido con contexto
-        for m in liq_pat.finditer(t):
-            raw = m.group(1)
-            if is_likely_boleta_num(raw):
-                continue
-            v = norm_money(raw)
-            if v and v >= 10000:
-                liq, origen_l = v, 'explicito_liquido'
-                break
+        # Buscar líquido
+        for priority, pattern in enumerate(liq_patterns):
+            for m in re.finditer(pattern, t):
+                raw = m.group(1)
+                if is_likely_boleta_num(raw):
+                    continue
+                v = norm_money(raw)
+                if v and v >= 10000:
+                    score = (len(liq_patterns) - priority) * 10
+                    if 'líquido' in m.group(0).lower() or 'liquido' in m.group(0).lower():
+                        score += 15
+                    liq_candidates.append((score, v, m.group(0), 'explicito_liquido'))
 
-        # Si ninguno encontrado, usar extractor legacy
+        # Seleccionar mejor candidato para cada uno
+        bruto = None; origen_b = None
+        if bruto_candidates:
+            bruto_candidates.sort(key=lambda x: x[0], reverse=True)
+            _, bruto, _, origen_b = bruto_candidates[0]
+
+        liq = None; origen_l = None
+        if liq_candidates:
+            liq_candidates.sort(key=lambda x: x[0], reverse=True)
+            _, liq, _, origen_l = liq_candidates[0]
+
+        # Fallback: si no encontramos nada, usar extractor legacy
         conf = 0.0
         if bruto is None and liq is None:
             monto_legacy, conf_legacy = self.extract_monto(text)
@@ -730,39 +757,44 @@ class FieldExtractor:
                 origen_b = 'ocr_legacy'
                 conf = max(conf, conf_legacy or 0.75)
 
-        # Validaciones y lógica de retorno
+        # LÓGICA DE VALIDACIÓN Y RETORNO
+        # Si solo hay bruto
         if bruto is not None and liq is None:
-            return int(bruto), None, max(conf, 0.90), origen_b
+            return int(bruto), None, max(conf, 0.92), origen_b
 
+        # Si solo hay líquido
         if liq is not None and bruto is None:
-            return None, int(liq), max(conf, 0.85), origen_l
+            return None, int(liq), max(conf, 0.87), origen_l
 
-        # Si ambos existen: validar que tenga sentido (líquido < bruto)
+        # Si tenemos ambos: validar coherencia
         if bruto is not None and liq is not None:
-            # En Chile, el líquido DEBE ser menor que el bruto (retención ~13-15%)
+            # CASO 1: líquido < bruto (correcto)
             if liq < bruto:
-                # Validar que la diferencia sea razonable (10-20% típicamente)
                 diff_pct = (bruto - liq) / bruto
-                if 0.05 <= diff_pct <= 0.25:  # Entre 5% y 25% de retención
-                    return int(bruto), int(liq), 0.95, origen_b
-                else:
-                    # Diferencia sospechosa, pero mantener si origen es explícito
-                    return int(bruto), int(liq), 0.85, origen_b
-            else:
-                # líquido >= bruto: datos inconsistentes
-                # Intentar determinar cuál es el correcto
-                if origen_b and 'total' in origen_b.lower():
-                    # Si bruto tiene etiqueta clara, usarlo
-                    return int(bruto), None, 0.80, origen_b + '_liq_invalido'
-                elif origen_l and 'liquido' in origen_l.lower():
-                    # Si líquido tiene etiqueta clara, usarlo
-                    return None, int(liq), 0.80, origen_l + '_bruto_invalido'
-                else:
-                    # Ambiguo: usar el menor como bruto (más conservador)
-                    val = min(bruto, liq)
-                    return int(val), None, 0.70, 'ambiguo_menor'
+                if 0.05 <= diff_pct <= 0.30:  # 5-30% retención (rango ampliado)
+                    return int(bruto), int(liq), 0.96, origen_b
+                elif diff_pct < 0.05:  # Muy poca diferencia (~5%)
+                    return int(bruto), int(liq), 0.88, origen_b + '_diff_baja'
+                else:  # Diferencia > 30%
+                    return int(bruto), int(liq), 0.85, origen_b + '_diff_alta'
 
-        # Sin datos confiables
+            # CASO 2: líquido >= bruto (inconsistente - OCR confundió)
+            else:
+                # Si encontramos "Total Honorarios" explícito, confiar en bruto
+                if origen_b and 'honorarios' in origen_b.lower():
+                    # El "bruto" es correcto, ignorar "líquido" erróneo
+                    return int(bruto), None, 0.88, origen_b + '_liq_descartado'
+
+                # Si encontramos "Líquido" explícito más fuerte
+                elif origen_l and 'liquido' in origen_l.lower():
+                    return None, int(liq), 0.85, origen_l + '_bruto_descartado'
+
+                # Ambiguo: usar el MAYOR (probablemente sea el bruto)
+                else:
+                    val = max(bruto, liq)
+                    return int(val), None, 0.78, 'ambiguo_mayor_seleccionado'
+
+        # Sin datos
         return None, None, 0.0, ''
 
     
@@ -1277,7 +1309,7 @@ class IntelligentBatchProcessor:
     def _needs_review_post_process(self, registro: Dict) -> bool:
         """
         NUEVO v4.0: Re-evaluación de necesidad de revisión después de post-procesamiento
-        Criterios más relajados que en v3.5
+        Criterios MÁS RELAJADOS para reducir revisiones manuales
         """
         tiene_rut = bool(registro.get('rut'))
         tiene_nombre = bool(registro.get('nombre'))
@@ -1285,40 +1317,46 @@ class IntelligentBatchProcessor:
         tiene_fecha = bool(registro.get('fecha_documento'))
         tiene_convenio = bool(registro.get('convenio') and registro.get('convenio') != 'SIN_CONVENIO')
         tiene_mes = bool(registro.get('mes_nombre') and registro.get('mes_nombre') != 'SIN_PERIODO')
-        
+
         # Criterio 1: RUT OBLIGATORIO
         if not tiene_rut:
             registro['revision_reason'] = 'Falta RUT (no se pudo inferir)'
             return True
-        
-        # Criterio 2: Al menos 2 de 3 críticos (nombre, monto, convenio)
-        criticos = sum([tiene_nombre, tiene_monto, tiene_convenio])
-        if criticos < 2:
-            faltantes = []
-            if not tiene_nombre:
-                faltantes.append('Nombre')
-            if not tiene_monto:
-                faltantes.append('Monto')
-            if not tiene_convenio:
-                faltantes.append('Convenio')
-            registro['revision_reason'] = f'Faltan campos: {", ".join(faltantes)}'
-            return True
-        
+
+        # Criterio 2 RELAJADO: Si tiene RUT + nombre + monto, es suficiente (convenio opcional)
+        # O al menos 2 de 3 críticos (nombre, monto, convenio)
+        if tiene_rut and tiene_nombre and tiene_monto:
+            # Suficiente para procesamiento automático
+            pass
+        else:
+            criticos = sum([tiene_nombre, tiene_monto, tiene_convenio])
+            if criticos < 2:
+                faltantes = []
+                if not tiene_nombre:
+                    faltantes.append('Nombre')
+                if not tiene_monto:
+                    faltantes.append('Monto')
+                if not tiene_convenio:
+                    faltantes.append('Convenio')
+                registro['revision_reason'] = f'Faltan campos: {", ".join(faltantes)}'
+                return True
+
         # Criterio 3: Validación de RUT
         if tiene_rut and not dv_ok(registro['rut']):
             registro['revision_reason'] = 'RUT con dígito verificador inválido'
             return True
-        
-        # Criterio 4: Monto en rango razonable
+
+        # Criterio 4: Monto en rango razonable (ahora usando MONTO_MAX de config)
         if tiene_monto:
             try:
                 monto = float(registro['monto'])
-                if monto < 50000 or monto > 5000000:
-                    registro['revision_reason'] = f'Monto sospechoso: ${monto:,.0f}'
+                # Rango más amplio: 30k a MONTO_MAX (5M)
+                if monto < 30000 or monto > MONTO_MAX:
+                    registro['revision_reason'] = f'Monto fuera de rango: ${monto:,.0f}'
                     return True
             except:
                 pass
-        
+
         # Si pasó todos los criterios, NO necesita revisión
         return False
     
