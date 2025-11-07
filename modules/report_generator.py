@@ -228,6 +228,13 @@ class ReportGenerator:
         workbook = writer.book
         worksheet = workbook.add_worksheet('Resumen Global')
 
+        # Verificar que el formato 'warning' existe, si no, crearlo
+        if 'warning' not in formats:
+            formats['warning'] = workbook.add_format({
+                'italic': True, 'text_wrap': True, 'valign': 'vcenter', 'align': 'center',
+                'fg_color': '#FFF2CC', 'border': 1, 'font_color': '#9C5700'
+            })
+
         row = 0
 
         # Título
@@ -237,7 +244,7 @@ class ReportGenerator:
         # Nota importante
         worksheet.merge_range(row, 0, row, 5,
                              "Nota: Estos totales se actualizan automáticamente al editar la hoja 'Base de Datos'",
-                             formats['warning'])
+                             formats.get('warning', formats['text']))
         row += 2
 
         # Estadísticas generales con fórmulas
