@@ -54,27 +54,36 @@ class ReportGenerator:
             output_path: Ruta del archivo Excel de salida
             generate_reports: Si True, genera hojas adicionales con informes por convenio
         """
-        writer = pd.ExcelWriter(output_path, engine='xlsxwriter')
-        workbook = writer.book
+        try:
+            writer = pd.ExcelWriter(output_path, engine='xlsxwriter')
+            workbook = writer.book
 
-        formats = self._create_formats(workbook)
+            formats = self._create_formats(workbook)
 
-        # Crear DataFrame principal
-        df_main = self._create_main_dataframe(registros)
+            # Crear DataFrame principal
+            df_main = self._create_main_dataframe(registros)
 
-        # Escribir hoja principal (Base de Datos)
-        df_main.to_excel(writer, sheet_name='Base de Datos', index=False)
-        self._format_main_sheet(writer, 'Base de Datos', df_main, formats)
+            # Escribir hoja principal (Base de Datos)
+            df_main.to_excel(writer, sheet_name='Base de Datos', index=False)
+            self._format_main_sheet(writer, 'Base de Datos', df_main, formats)
 
-        # NUEVO: Agregar hoja de Resumen Global con fórmulas dinámicas
-        self._create_summary_sheet(writer, df_main, formats)
+            # NUEVO: Agregar hoja de Resumen Global con fórmulas dinámicas
+            self._create_summary_sheet(writer, df_main, formats)
 
-        # Hojas por convenio
-        if generate_reports:
-            self._generate_convention_reports(writer, df_main, formats)
+            # Hojas por convenio
+            if generate_reports:
+                self._generate_convention_reports(writer, df_main, formats)
 
-        writer.close()
-        return df_main
+            writer.close()
+            return df_main
+        except Exception as e:
+            import traceback
+            print(f"❌ Error detallado en create_excel_with_reports:")
+            print(f"   Tipo: {type(e).__name__}")
+            print(f"   Mensaje: {e}")
+            print(f"   Traceback completo:")
+            traceback.print_exc()
+            raise
 
     def _create_formats(self, workbook) -> Dict:
         """Crea los formatos para el libro de Excel"""
@@ -228,12 +237,20 @@ class ReportGenerator:
         workbook = writer.book
         worksheet = workbook.add_worksheet('Resumen Global')
 
-        # Verificar que el formato 'warning' existe, si no, crearlo
-        if 'warning' not in formats:
-            formats['warning'] = workbook.add_format({
-                'italic': True, 'text_wrap': True, 'valign': 'vcenter', 'align': 'center',
-                'fg_color': '#FFF2CC', 'border': 1, 'font_color': '#9C5700'
-            })
+        # Verificar que todos los formatos necesarios existen
+        required_formats = ['warning', 'title', 'subtitle', 'text', 'text_center',
+                           'currency', 'currency_bold', 'total', 'header', 'percent']
+
+        for fmt_name in required_formats:
+            if fmt_name not in formats:
+                print(f"⚠️ Advertencia: formato '{fmt_name}' no encontrado, creando formato por defecto")
+                if fmt_name == 'warning':
+                    formats[fmt_name] = workbook.add_format({
+                        'italic': True, 'text_wrap': True, 'valign': 'vcenter', 'align': 'center',
+                        'fg_color': '#FFF2CC', 'border': 1, 'font_color': '#9C5700'
+                    })
+                else:
+                    formats[fmt_name] = workbook.add_format({'border': 1})
 
         row = 0
 
@@ -244,7 +261,7 @@ class ReportGenerator:
         # Nota importante
         worksheet.merge_range(row, 0, row, 5,
                              "Nota: Estos totales se actualizan automáticamente al editar la hoja 'Base de Datos'",
-                             formats.get('warning', formats['text']))
+                             formats['warning'])
         row += 2
 
         # Estadísticas generales con fórmulas
