@@ -254,49 +254,113 @@ class BatchMemory:
         return nombre
 
     def normalize_by_rut_decreto(self, registros: List[Dict], log_callback=None) -> List[Dict]:
-        """Normaliza monto/horas por RUT + Decreto en el batch actual"""
+        """
+        Normaliza monto/horas por RUT + Decreto en el batch actual
+        MEJORA: Usa el monto más común y validado, prefiriendo montos brutos
+        """
         if not registros:
             return registros
-        
-        # Construir mapa RUT + Decreto -> Monto/Horas
-        rut_decreto_map = {}
+
+        # Construir mapa RUT + Decreto -> Montos/Horas más comunes
+        rut_decreto_map = defaultdict(lambda: {'montos': [], 'horas': [], 'convenios': []})
+
         for r in registros:
             rut = r.get('rut', '').strip()
             decreto = r.get('decreto_alcaldicio', '').strip()
             monto = r.get('monto', '').strip()
             horas = r.get('horas', '').strip()
-            
-            if rut and decreto and (monto or horas):
+            convenio = r.get('convenio', '').strip()
+            monto_validado = r.get('monto_validado', False)
+
+            if rut and decreto:
                 key = f"{rut}_{decreto}"
-                if key not in rut_decreto_map:
-                    rut_decreto_map[key] = {'monto': monto, 'horas': horas, 'count': 1}
-                else:
-                    rut_decreto_map[key]['count'] += 1
-        
-        # Aplicar normalizacion
-        aplicados = 0
+
+                # Priorizar montos validados o con alta confianza
+                if monto:
+                    conf = r.get('monto_confidence', 0)
+                    # Dar mayor peso a montos validados
+                    weight = 2 if monto_validado else 1
+                    for _ in range(weight):
+                        rut_decreto_map[key]['montos'].append((monto, conf))
+
+                if horas:
+                    rut_decreto_map[key]['horas'].append(horas)
+
+                if convenio and convenio != 'SIN_CONVENIO':
+                    rut_decreto_map[key]['convenios'].append(convenio)
+
+        # Determinar valores más comunes
+        patterns = {}
+        for key, data in rut_decreto_map.items():
+            pattern = {}
+
+            # Monto más común (con mayor confianza)
+            if data['montos']:
+                monto_counts = Counter([m for m, _ in data['montos']])
+                if monto_counts:
+                    monto_mas_comun = monto_counts.most_common(1)[0][0]
+                    # Calcular confianza promedio de ese monto
+                    confs = [c for m, c in data['montos'] if m == monto_mas_comun]
+                    pattern['monto'] = monto_mas_comun
+                    pattern['monto_conf'] = sum(confs) / len(confs) if confs else 0.85
+
+            # Horas más comunes
+            if data['horas']:
+                horas_counts = Counter(data['horas'])
+                pattern['horas'] = horas_counts.most_common(1)[0][0]
+
+            # Convenio más común
+            if data['convenios']:
+                conv_counts = Counter(data['convenios'])
+                pattern['convenio'] = conv_counts.most_common(1)[0][0]
+
+            if pattern:
+                patterns[key] = pattern
+
+        # Aplicar normalización
+        aplicados = {'monto': 0, 'horas': 0, 'convenio': 0}
+
         for r in registros:
             rut = r.get('rut', '').strip()
             decreto = r.get('decreto_alcaldicio', '').strip()
-            
+
             if rut and decreto:
                 key = f"{rut}_{decreto}"
-                if key in rut_decreto_map:
-                    pattern = rut_decreto_map[key]
-                    
-                    if pattern.get('monto') and not r.get('monto'):
-                        r['monto'] = pattern['monto']
-                        r['monto_confidence'] = 0.90
-                        r['monto_origen'] = 'batch_rut_decreto'
-                        aplicados += 1
-                    
+                if key in patterns:
+                    pattern = patterns[key]
+
+                    # Aplicar monto si falta o tiene baja confianza
+                    if pattern.get('monto'):
+                        current_conf = r.get('monto_confidence', 0)
+                        pattern_conf = pattern.get('monto_conf', 0.85)
+
+                        if not r.get('monto') or (current_conf < 0.7 and pattern_conf > current_conf):
+                            r['monto'] = pattern['monto']
+                            r['monto_confidence'] = pattern_conf
+                            r['monto_origen'] = 'batch_rut_decreto_normalizado'
+                            aplicados['monto'] += 1
+
+                    # Aplicar horas si faltan
                     if pattern.get('horas') and not r.get('horas'):
                         r['horas'] = pattern['horas']
                         r['horas_origen'] = 'batch_rut_decreto'
-        
-        if log_callback and aplicados > 0:
-            log_callback(f"   [OK] {aplicados} campos normalizados por RUT+Decreto", "success")
-        
+                        aplicados['horas'] += 1
+
+                    # Aplicar convenio si falta
+                    if pattern.get('convenio') and (not r.get('convenio') or r.get('convenio') == 'SIN_CONVENIO'):
+                        r['convenio'] = pattern['convenio']
+                        r['convenio_origen'] = 'batch_rut_decreto'
+                        aplicados['convenio'] += 1
+
+        if log_callback and sum(aplicados.values()) > 0:
+            log_callback(f"   [OK] Normalización RUT+Decreto aplicada:", "success")
+            if aplicados['monto'] > 0:
+                log_callback(f"      • {aplicados['monto']} montos normalizados", "success")
+            if aplicados['horas'] > 0:
+                log_callback(f"      • {aplicados['horas']} horas normalizadas", "success")
+            if aplicados['convenio'] > 0:
+                log_callback(f"      • {aplicados['convenio']} convenios normalizados", "success")
+
         return registros
 
 
@@ -666,8 +730,9 @@ class FieldExtractor:
     def extract_montos_prefer_bruto(self, text: str):
         """
         Devuelve (monto_bruto, monto_liquido, conf, origen)
-        - Búsqueda agresiva de 'Total Honorarios' (bruto) y 'Líquido' (neto)
-        - Valida coherencia: líquido < bruto con diferencia razonable
+        - Búsqueda MEJORADA con detección de todos los montos posibles
+        - Análisis semántico del contexto (busca líneas completas)
+        - Validación de coherencia: líquido < bruto con diferencia razonable
         - Prioriza etiquetas explícitas sobre posición
         """
         t = re.sub(r'[|]+', ' ', text or '')
@@ -676,15 +741,19 @@ class FieldExtractor:
         bruto_patterns = [
             r'(?i)total\s+honorarios?\s*(?:brutos?)?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
             r'(?i)honorarios?\s*(?:brutos?)?\s*total\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
-            r'(?i)honorarios?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',  # Honorarios suelto
-            r'(?i)total\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',  # Total + monto (más genérico, menor prioridad)
+            r'(?i)honorarios?\s+brutos?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
+            r'(?i)(?:monto|valor)\s+bruto\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
         ]
 
         liq_patterns = [
             r'(?i)(?:monto\s+)?l[ií]quido(?:\s+(?:pagado|a\s+pagar))?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
             r'(?i)(?:monto\s+)?neto\s*(?:pagado)?\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
             r'(?i)total\s+a\s+pagar\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
+            r'(?i)l[ií]quido\s+a\s+cancelar\s*\$?\s*[:=\-]?\s*([\d\.\s,]+)',
         ]
+
+        # Patrón adicional para buscar TODOS los montos en formato $
+        all_amounts_pattern = r'\$\s*([\d\.\s,]{6,})'
 
         def is_likely_boleta_num(s: str) -> bool:
             """Excluir números de boleta/folio (1-4 dígitos)"""
@@ -709,6 +778,7 @@ class FieldExtractor:
         # Buscar TODOS los candidatos con sus prioridades
         bruto_candidates = []
         liq_candidates = []
+        all_amounts = []
 
         # Buscar bruto con diferentes patrones (orden = prioridad)
         for priority, pattern in enumerate(bruto_patterns):
@@ -737,6 +807,15 @@ class FieldExtractor:
                         score += 15
                     liq_candidates.append((score, v, m.group(0), 'explicito_liquido'))
 
+        # Buscar TODOS los montos para análisis posterior
+        for m in re.finditer(all_amounts_pattern, t):
+            raw = m.group(1)
+            if is_likely_boleta_num(raw):
+                continue
+            v = norm_money(raw)
+            if v and v >= 10000:
+                all_amounts.append(v)
+
         # Seleccionar mejor candidato para cada uno
         bruto = None; origen_b = None
         if bruto_candidates:
@@ -757,13 +836,24 @@ class FieldExtractor:
                 origen_b = 'ocr_legacy'
                 conf = max(conf, conf_legacy or 0.75)
 
-        # LÓGICA DE VALIDACIÓN Y RETORNO
+        # LÓGICA DE VALIDACIÓN Y RETORNO MEJORADA
         # Si solo hay bruto
         if bruto is not None and liq is None:
             return int(bruto), None, max(conf, 0.92), origen_b
 
-        # Si solo hay líquido
+        # Si solo hay líquido - BUSCAR EL BRUTO inferido
         if liq is not None and bruto is None:
+            # Calcular bruto estimado (líquido / (1 - retención))
+            # Asumiendo retención típica del 14.5%
+            bruto_estimado = liq / (1 - 0.145)
+
+            # Buscar en all_amounts si hay algún monto cercano al bruto estimado
+            for amt in all_amounts:
+                if abs(amt - bruto_estimado) / bruto_estimado < 0.03:  # 3% de tolerancia
+                    # Encontramos el bruto!
+                    return int(amt), int(liq), 0.93, 'bruto_inferido_desde_liquido'
+
+            # No encontramos bruto, solo tenemos líquido
             return None, int(liq), max(conf, 0.87), origen_l
 
         # Si tenemos ambos: validar coherencia
@@ -1615,45 +1705,90 @@ class DataProcessorOptimized:
         return campos
     
     def _validate_monto_horas(self, campos: Dict) -> Dict:
-        """Valida monto/horas y calcula si es necesario"""
+        """
+        Valida monto/horas con valores hora de referencia y detecta si es líquido vs bruto
+        MEJORA: Usa valores hora reales (8221 y 10004) para validar exactitud
+        """
         monto_str = campos.get('monto', '')
         horas_str = campos.get('horas', '')
         tipo = (campos.get('tipo') or '').lower()
+        convenio = (campos.get('convenio') or '').upper()
 
+        # Determinar valor hora de referencia según convenio
+        if 'ESPACIOS' in convenio and 'AMIGABLES' in convenio:
+            valor_hora_ref = VALOR_HORA_ESPACIOS_AMIGABLES  # 10004
+        else:
+            valor_hora_ref = VALOR_HORA_GENERAL  # 8221
+
+        # Calcular monto si faltan datos
         if (not monto_str) and (not campos.get('monto_bruto')) and horas_str and tipo:
             try:
                 horas = int(horas_str)
-                base_hora = 8221.0
                 factor = 4.0 if 'semanal' in tipo else 1.0
-                calculado = round(base_hora * horas * factor)
+                calculado = round(valor_hora_ref * horas * factor)
                 campos['monto'] = str(int(calculado))
-                campos['monto_confidence'] = 0.55
-                campos['monto_origen'] = 'calculado'
+                campos['monto_confidence'] = 0.65
+                campos['monto_origen'] = 'calculado_con_ref'
+                campos['monto_bruto'] = int(calculado)
             except Exception:
                 pass
 
+        # Validar monto existente contra valores hora de referencia
         monto_str = campos.get('monto', '')
         horas_str = campos.get('horas', '')
-        if not monto_str or not horas_str:
-            return campos
 
-        try:
-            monto = float(monto_str)
-            horas = int(horas_str)
-            valor_hora_estimado = monto / (horas * (4 if 'semanal' in tipo else 1))
-            campos['valor_hora_calculado'] = round(valor_hora_estimado, 2)
-            campos['monto_fuera_rango'] = not (7000 <= valor_hora_estimado <= 12000)
-        except (ValueError, ZeroDivisionError):
-            pass
-        
-        if campos.get('monto_bruto'):
+        if monto_str and horas_str:
+            try:
+                monto = float(monto_str)
+                horas = int(horas_str)
+                factor = 4.0 if 'semanal' in tipo else 1.0
+
+                # Calcular valor hora desde el monto extraído
+                valor_hora_calculado = monto / (horas * factor)
+                campos['valor_hora_calculado'] = round(valor_hora_calculado, 2)
+
+                # Calcular monto esperado con valor hora de referencia
+                monto_esperado_bruto = valor_hora_ref * horas * factor
+
+                # DETECCIÓN CLAVE: ¿El monto es líquido o bruto?
+                diferencia_pct = (monto_esperado_bruto - monto) / monto_esperado_bruto
+
+                # Si la diferencia está en el rango de retención (13-17%), probablemente es líquido
+                if RETENCION_PORCENTAJE_MIN <= diferencia_pct <= RETENCION_PORCENTAJE_MAX:
+                    # ¡Detectamos que es LÍQUIDO, no BRUTO!
+                    campos['monto_liquido'] = int(monto)
+                    campos['monto_bruto'] = int(monto_esperado_bruto)
+                    campos['monto'] = str(int(monto_esperado_bruto))
+                    campos['monto_origen'] = 'corregido_desde_liquido'
+                    campos['monto_confidence'] = 0.88
+                    campos['warning'] = f'Monto corregido: extraído era líquido (${int(monto):,}), bruto esperado (${int(monto_esperado_bruto):,})'
+
+                # Si el monto está cerca del esperado (dentro de tolerancia), es bruto correcto
+                elif abs(diferencia_pct) <= TOLERANCIA_VALOR_HORA:
+                    campos['monto_bruto'] = int(monto)
+                    campos['monto'] = str(int(monto))
+                    campos['monto_validado'] = True
+
+                # Si es mayor al esperado pero dentro de un rango razonable (5%)
+                elif -0.05 <= diferencia_pct < 0:
+                    campos['monto_bruto'] = int(monto)
+                    campos['monto'] = str(int(monto))
+                    campos['monto_validado'] = True
+                    campos['warning'] = f'Monto ligeramente mayor al esperado (diff: {abs(diferencia_pct)*100:.1f}%)'
+
+                # Si la diferencia es muy grande (>20%), marcar para revisión
+                elif abs(diferencia_pct) > 0.20:
+                    campos['monto_fuera_rango'] = True
+                    campos['warning'] = f'Monto con diferencia significativa vs esperado: {diferencia_pct*100:.1f}%'
+
+            except (ValueError, ZeroDivisionError):
+                pass
+
+        # Si ya tenemos monto_bruto explícito, usarlo
+        if campos.get('monto_bruto') and campos.get('monto_origen') not in ['corregido_desde_liquido']:
             campos['monto'] = str(int(campos['monto_bruto']))
-            campos['monto_origen'] = campos.get('monto_origen') or 'prefer_bruto'
-
-                # si el monto viene de prefer_bruto, no lo sobre-escribas con cálculos
-        if campos.get('monto_origen') == 'prefer_bruto':
-            return campos
-
+            if not campos.get('monto_origen'):
+                campos['monto_origen'] = 'prefer_bruto'
 
         return campos
     

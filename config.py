@@ -54,6 +54,15 @@ SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"
 MONTO_MIN = 10_000
 MONTO_MAX = 5_000_000  # Aumentado para cubrir montos más altos
 
+# Valores hora de referencia (para validación de montos)
+VALOR_HORA_GENERAL = 8221  # Valor hora estándar para la mayoría de convenios
+VALOR_HORA_ESPACIOS_AMIGABLES = 10004  # Valor hora específico para Espacios Amigables
+TOLERANCIA_VALOR_HORA = 0.05  # 5% de tolerancia en validaciones
+
+# Porcentaje típico de retención de impuestos (para detectar líquido vs bruto)
+RETENCION_PORCENTAJE_MIN = 0.13  # 13% retención mínima típica
+RETENCION_PORCENTAJE_MAX = 0.17  # 17% retención máxima típica
+
 # Configuración de OCR
 OCR_DPI = 400  # Aumentado de 350 a 400 para mejor calidad
 OCR_CONFIDENCE_THRESHOLD = 0.45
