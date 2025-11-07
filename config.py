@@ -52,10 +52,10 @@ SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"
 
 # Configuración de montos
 MONTO_MIN = 10_000
-MONTO_MAX = 2_000_000
+MONTO_MAX = 5_000_000  # Aumentado para cubrir montos más altos
 
 # Configuración de OCR
-OCR_DPI = 350
+OCR_DPI = 400  # Aumentado de 350 a 400 para mejor calidad
 OCR_CONFIDENCE_THRESHOLD = 0.45
 
 # Expresiones regulares y patrones

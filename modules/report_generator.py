@@ -100,7 +100,11 @@ class ReportGenerator:
             'total': workbook.add_format({
                 'bold': True, 'num_format': '#,##0', 'align': 'right', 'border': 1, 'fg_color': '#FFE699'
             }),
-            'percent': workbook.add_format({'num_format': '0.0%', 'align': 'center', 'border': 1})
+            'percent': workbook.add_format({'num_format': '0.0%', 'align': 'center', 'border': 1}),
+            'warning': workbook.add_format({
+                'italic': True, 'text_wrap': True, 'valign': 'vcenter', 'align': 'center',
+                'fg_color': '#FFF2CC', 'border': 1, 'font_color': '#9C5700'
+            })
         }
 
     def _create_main_dataframe(self, registros: List[Dict]) -> pd.DataFrame:
